@@ -38,3 +38,7 @@ palettes:
 palettes are stored in /usr/local/share/muse/palettes after installation
 custom palettes can be added by copying .txt files to this directory
 palette format is compatible with lospec palette files (PAINT.NET txt file)
+
+§ credits
+https://github.com/nothings/stb/blob/master/stb_image.h
+https://github.com/nothings/stb/blob/master/stb_image_write.h
