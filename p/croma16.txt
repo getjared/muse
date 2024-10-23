@@ -1,0 +1,21 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: croma16
+;Description: A desaturated, minimal, and versatile color palette. It's spelled without the h because I forgot while drawing and i kept it because it was catchy and it fitted the minimal asthetic :).<br>
+;Colors: 16
+FFb65780
+FFcd909c
+FFd1b3a2
+FFf0f4c2
+FFaac478
+FF68a961
+FF3d8057
+FF439c6e
+FF64b3a3
+FF9bcfcb
+FF6794af
+FF4163a0
+FF30233a
+FF514a73
+FF7a72ac
+FFd2aadb

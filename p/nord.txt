@@ -1,0 +1,20 @@
+;paint.net Palette File
+;Palette Name: Nord
+;Description: An arctic, north-bluish color palette
+;Colors: 16
+FF2e3436
+FF3b4246
+FF434c58
+FF4c565e
+FFd8e2ee
+FFe5e9f0
+FFeceff4
+FFbfc6ce
+FF81a1c1
+FFbfe9b1
+FFe2c0ff
+FFf2c4e1
+FFa3be8c
+FFe3bfb8
+FFe3bfb8
+FF81a1c1

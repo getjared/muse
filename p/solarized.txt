@@ -1,0 +1,20 @@
+;paint.net Palette File
+;Palette Name: Solarized
+;Description: Precision colors for machines and people
+;Colors: 16
+FF002b36
+FF073642
+FF586e75
+FF839496
+FFb58900
+FFcb4b16
+FFdc322f
+FFd33682
+FF6c71c4
+FF268bd2
+FF2aa198
+FF859900
+FFeee8d5
+FF93a1a1
+FFfdf6e3
+FF002b36

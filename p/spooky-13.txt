@@ -1,0 +1,18 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: spooky 13
+;Description: a spooky palette for da spooky month
+;Colors: 13
+FFb7b1ae
+FF8d8785
+FF595252
+FF443b3d
+FF322935
+FFbb9d68
+FFb17c63
+FF9a5848
+FF6c463b
+FF859052
+FF6c7347
+FF915586
+FF6b3a71
