@@ -7,8 +7,8 @@ features:
 • external palette support
 • lightweight and fast
 
-<a href="https://imgur.com/fkzmPtQ"><img src="https://i.imgur.com/fkzmPtQ.jpg" title="source: before" /></a>
-<a href="https://imgur.com/tkTjHtR"><img src="https://i.imgur.com/tkTjHtR.png" title="source: after" /></a>
+before >> https://i.imgur.com/fkzmPtQ.jpg
+after  >> https://i.imgur.com/tkTjHtR.png
 
 see ./makefile for a easy installation
 
