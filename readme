@@ -1,0 +1,40 @@
+
+                             muse.c
+                   <a simple image converter>
+
+features:
+• multiple dithering algorithms
+• external palette support
+• lightweight and fast
+
+see ./makefile for a easy installation
+
+§ installation
+git clone https://github.com/getjared/muse.git
+cd muse
+make
+sudo make install
+
+§ dependencies
+• c compiler (gcc or clang)
+• make
+• stb_image.h         (included)
+• stb_image_write.h   (included)
+
+§ quick-start
+basic usage:
+./muse input.jpg output.png catppuccin.txt        : convert with floyd-steinberg (default)
+./muse input.jpg output.png nord.txt bayer        : convert using bayer dithering
+./muse input.jpg output.png spooky-13.txt ordered : convert using ordered dithering
+./muse input.jpg output.png croma16.txt nodither  : convert without dithering
+
+dithering methods:
+• floyd     : floyd-steinberg dithering (default)
+• bayer     : bayer matrix dithering
+• ordered   : ordered dithering
+• nodither  : no dithering
+
+palettes:
+palettes are stored in /usr/local/share/muse/palettes after installation
+custom palettes can be added by copying .txt files to this directory
+palette format is compatible with lospec palette files (PAINT.NET txt file)
