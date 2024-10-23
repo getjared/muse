@@ -7,8 +7,9 @@ features:
 • external palette support
 • lightweight and fast
 
-before >> https://i.imgur.com/fkzmPtQ.jpg
-after  >> https://i.imgur.com/tkTjHtR.png
+using catppuccin.txt
+• before >> https://i.imgur.com/fkzmPtQ.jpg
+• after  >> https://i.imgur.com/tkTjHtR.png
 
 see ./makefile for a easy installation
 
