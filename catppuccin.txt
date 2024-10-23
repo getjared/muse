@@ -1,0 +1,30 @@
+;paint.net Palette File
+;Palette Name: Catppuccin
+;Description: Soothing pastel theme
+;Colors: 26
+FFf5e0dc
+FFf2cdcd
+FFf5c2e7
+FFcba6f7
+FFf38ba8
+FFeba0ac
+FFfab387
+FFf9e2af
+FFa6e3a1
+FF94e2d5
+FF89dceb
+FF74c7ec
+FF89b4fa
+FFb4befe
+FFcdd6f4
+FFbac2de
+FFa6adc8
+FF9399b2
+FF7f849c
+FF6c7086
+FF585b70
+FF45475a
+FF313244
+FF1e1e2e
+FF181825
+FF11111b
