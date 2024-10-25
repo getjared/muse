@@ -346,6 +346,27 @@ void apply_super_panavision70_effect(float *image_f, int width, int height, int 
     }
 }
 
+void apply_color_grading(float *image_f, int width, int height, float brightness, float contrast, float saturation) {
+    for (int i = 0; i < width * height * 3; i += 3) {
+        float r = image_f[i];
+        float g = image_f[i + 1];
+        float b = image_f[i + 2];
+
+        r = (r - 128.0f) * contrast + 128.0f + brightness;
+        g = (g - 128.0f) * contrast + 128.0f + brightness;
+        b = (b - 128.0f) * contrast + 128.0f + brightness;
+
+        float gray = 0.299f * r + 0.587f * g + 0.114f * b;
+        r = gray + (r - gray) * saturation;
+        g = gray + (g - gray) * saturation;
+        b = gray + (b - gray) * saturation;
+
+        image_f[i]     = r > 255.0f ? 255.0f : (r < 0.0f ? 0.0f : r);
+        image_f[i + 1] = g > 255.0f ? 255.0f : (g < 0.0f ? 0.0f : g);
+        image_f[i + 2] = b > 255.0f ? 255.0f : (b < 0.0f ? 0.0f : b);
+    }
+}
+
 int main(int argc, char *argv[]) {
     int opt;
     int blur_strength = 0;
@@ -354,17 +375,24 @@ int main(int argc, char *argv[]) {
     int super8_flag = 0;
     int panavision_strength = 0;
     int panavision_flag = 0;
+    float brightness = 0.0f;
+    float contrast = 1.0f;
+    float saturation = 1.0f;
+    int grading_flag = 0;
 
     static struct option long_options[] = {
         {"blur", required_argument, 0, 'b'},
         {"super8", required_argument, 0, 's'},
         {"panavision", required_argument, 0, 'p'},
+        {"brightness", required_argument, 0, 'B'},
+        {"contrast", required_argument, 0, 'C'},
+        {"saturation", required_argument, 0, 'S'},
         {0, 0, 0, 0}
     };
 
     srand((unsigned int)time(NULL));
 
-    while ((opt = getopt_long(argc, argv, "b:s:p:", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:s:p:B:C:S:", long_options, NULL)) != -1) {
         switch (opt) {
             case 'b':
                 blur_strength = atoi(optarg);
@@ -390,12 +418,27 @@ int main(int argc, char *argv[]) {
                 }
                 panavision_flag = 1;
                 break;
+            case 'B':
+                brightness = atof(optarg);
+                grading_flag = 1;
+                break;
+            case 'C':
+                contrast = atof(optarg);
+                grading_flag = 1;
+                break;
+            case 'S':
+                saturation = atof(optarg);
+                grading_flag = 1;
+                break;
             default:
                 fprintf(stderr, "Usage: %s [options] <input_image> <output_image> <palette_file> [dither_method]\n", argv[0]);
                 fprintf(stderr, "Options:\n");
-                fprintf(stderr, "  -b, --blur <strength>    Apply blur with specified strength\n");
-                fprintf(stderr, "  -s, --super8 <strength>  Apply Super8 effect with specified strength\n");
-                fprintf(stderr, "  -p, --panavision <strength> Apply Super Panavision 70 effect with specified strength\n");
+                fprintf(stderr, "  -b, --blur <strength>          Apply blur with specified strength\n");
+                fprintf(stderr, "  -s, --super8 <strength>        Apply Super8 effect with specified strength\n");
+                fprintf(stderr, "  -p, --panavision <strength>    Apply Super Panavision 70 effect with specified strength\n");
+                fprintf(stderr, "  -B, --brightness <value>       Adjust brightness (float)\n");
+                fprintf(stderr, "  -C, --contrast <value>         Adjust contrast (float)\n");
+                fprintf(stderr, "  -S, --saturation <value>       Adjust saturation (float)\n");
                 fprintf(stderr, "Available dither methods: floyd (default), bayer, ordered, nodither\n");
                 return 1;
         }
@@ -405,9 +448,12 @@ int main(int argc, char *argv[]) {
     if (remaining_args < 3 || remaining_args > 4) {
         fprintf(stderr, "Usage: %s [options] <input_image> <output_image> <palette_file> [dither_method]\n", argv[0]);
         fprintf(stderr, "Options:\n");
-        fprintf(stderr, "  -b, --blur <strength>    Apply blur with specified strength\n");
-        fprintf(stderr, "  -s, --super8 <strength>  Apply Super8 effect with specified strength\n");
-        fprintf(stderr, "  -p, --panavision <strength> Apply Super Panavision 70 effect with specified strength\n");
+        fprintf(stderr, "  -b, --blur <strength>          Apply blur with specified strength\n");
+        fprintf(stderr, "  -s, --super8 <strength>        Apply Super8 effect with specified strength\n");
+        fprintf(stderr, "  -p, --panavision <strength>    Apply Super Panavision 70 effect with specified strength\n");
+        fprintf(stderr, "  -B, --brightness <value>       Adjust brightness (float)\n");
+        fprintf(stderr, "  -C, --contrast <value>         Adjust contrast (float)\n");
+        fprintf(stderr, "  -S, --saturation <value>       Adjust saturation (float)\n");
         fprintf(stderr, "Available dither methods: floyd (default), bayer, ordered, nodither\n");
         return 1;
     }
@@ -479,6 +525,12 @@ int main(int argc, char *argv[]) {
         printf("Applying Super Panavision 70 effect with strength %d...\n", panavision_strength);
         apply_super_panavision70_effect(image_f, width, height, panavision_strength);
         printf("Super Panavision 70 effect applied.\n");
+    }
+
+    if (grading_flag) {
+        printf("Applying color grading with brightness %.2f, contrast %.2f, saturation %.2f...\n", brightness, contrast, saturation);
+        apply_color_grading(image_f, width, height, brightness, contrast, saturation);
+        printf("Color grading applied.\n");
     }
 
     unsigned char *output = malloc(width * height * 3);
