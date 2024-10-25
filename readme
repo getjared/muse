@@ -31,7 +31,9 @@ basic usage:
 ./muse input.jpg output.png nord.txt bayer         : convert using bayer dithering
 ./muse input.jpg output.png spooky-13.txt ordered  : convert using ordered dithering
 ./muse input.jpg output.png croma16.txt nodither   : convert without dithering
-./muse -b 3 input.png output.png nord.txt bayer    : convert using blur & strength >>
+
+with blur:
+./muse -b 3 input.jpg output.png nord.txt bayer    : convert using blur & strength >>
 
 dithering methods:
 • floyd     : floyd-steinberg dithering (default)
