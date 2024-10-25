@@ -35,12 +35,17 @@ basic usage:
 with blur:
 ./muse -b 3 input.jpg output.png nord.txt bayer    : convert using blur & strength >>
 
+with super8 (8mm camera)
+./muse -s 3 input.png output.png croma16.txt.txt nodither  : convert using super8
+./muse -b 1 -s 4 input.jpg output.png nord.txt bayer       : convert using blur & super8
+
 dithering methods:
 • floyd     : floyd-steinberg dithering (default)
 • bayer     : bayer matrix dithering
 • ordered   : ordered dithering
 • nodither  : no dithering
 • blur      : blur effect
+• super 8   : 8mm camera effect
 
 palettes:
 palettes are stored in /usr/local/share/muse/palettes after installation
