@@ -35,13 +35,22 @@ basic usage:
 with blur:
 ./muse -b 3 input.jpg output.png nord.txt bayer    : convert using blur & strength >>
 
-with super8 (8mm camera)
+with super8: (8mm camera)
 ./muse -s 3 input.png output.png croma16.txt nodither  : convert using super8
 ./muse -b 1 -s 4 input.jpg output.png nord.txt bayer   : convert using blur & super8
 
-with Super Panavision 70
+with Super Panavision 70:
 ./muse -p 2 input.png output.png nord.txt                  : convert using super panavision
 ./muse -b 3 -s 2 -p 4 input.png output.png spooky-13.txt   : convert using blur, super8 & super panavision
+
+other stuff:
+• -B (brightness)
+• -C (contrast)
+• -S (saturation)
+  usage examples:
+  ./muse -b 3 -s 2 -p 4 -B 10.0 -C 1.2 -S 1.1 input.png output.png nord.txt floyd
+  ./muse --blur 5 --super8 3 --panavision 4 --brightness 10.0 --contrast 1.2 --saturation 1.1 input.png output.png nord.txt ordered
+
 
 dithering methods:
 • floyd             : floyd-steinberg dithering (default)
