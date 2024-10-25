@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include <ctype.h>
+#include <getopt.h>
 #include "stb_image.h"
 #include "stb_image_write.h"
 
@@ -94,6 +95,7 @@ Color find_closest_color_cached(Color pixel) {
 
 Theme load_palette_file(const char *filename) {
     Theme theme;
+    memset(&theme, 0, sizeof(Theme));
     char filepath[512];
     FILE *file;
 
@@ -108,16 +110,12 @@ Theme load_palette_file(const char *filename) {
     }
 
     char *base_name = strrchr(filename, '/');
-    if (base_name) {
-        base_name++;
-    } else {
-        base_name = (char*)filename;
-    }
+    base_name = base_name ? base_name + 1 : (char*)filename;
     
     char *dot = strrchr(base_name, '.');
     if (dot) {
         int len = dot - base_name;
-        if (len > 63) len = 63;
+        len = len > 63 ? 63 : len;
         strncpy(theme.name, base_name, len);
         theme.name[len] = '\0';
     } else {
@@ -125,9 +123,7 @@ Theme load_palette_file(const char *filename) {
         theme.name[63] = '\0';
     }
 
-    theme.num_colors = 0;
     char line[256];
-
     while (fgets(line, sizeof(line), file)) {
         if (line[0] == ';' || line[0] == '\n' || line[0] == '\r') {
             continue;
@@ -145,10 +141,17 @@ Theme load_palette_file(const char *filename) {
         hex[6] = '\0';
 
         if (sscanf(hex, "%02x%02x%02x", &r, &g, &b) == 3) {
-            theme.palette[theme.num_colors].r = r;
-            theme.palette[theme.num_colors].g = g;
-            theme.palette[theme.num_colors].b = b;
-            theme.num_colors++;
+            if (theme.num_colors < 256) {
+                theme.palette[theme.num_colors].r = (uint8_t)r;
+                theme.palette[theme.num_colors].g = (uint8_t)g;
+                theme.palette[theme.num_colors].b = (uint8_t)b;
+                theme.num_colors++;
+            } else {
+                fprintf(stderr, "Warning: Maximum palette size of 256 colors reached. Additional colors are ignored.\n");
+                break;
+            }
+        } else {
+            fprintf(stderr, "Warning: Invalid color format in palette file: %s", line);
         }
     }
 
@@ -228,52 +231,141 @@ void apply_floyd_steinberg_dither(float *image_f, unsigned char *output, int wid
             float err_b = (float)old_pixel.b - (float)new_pixel.b;
 
             if (x + 1 < width) {
-                image_f[idx + 3] += err_r * 7.0f / 16.0f;
-                image_f[idx + 4] += err_g * 7.0f / 16.0f;
-                image_f[idx + 5] += err_b * 7.0f / 16.0f;
-            }
-            if (y + 1 < height && x > 0) {
-                image_f[idx + width * 3 - 3] += err_r * 3.0f / 16.0f;
-                image_f[idx + width * 3 - 2] += err_g * 3.0f / 16.0f;
-                image_f[idx + width * 3 - 1] += err_b * 3.0f / 16.0f;
+                int right = idx + 3;
+                image_f[right]     += err_r * 7.0f / 16.0f;
+                image_f[right + 1] += err_g * 7.0f / 16.0f;
+                image_f[right + 2] += err_b * 7.0f / 16.0f;
             }
             if (y + 1 < height) {
-                image_f[idx + width * 3] += err_r * 5.0f / 16.0f;
-                image_f[idx + width * 3 + 1] += err_g * 5.0f / 16.0f;
-                image_f[idx + width * 3 + 2] += err_b * 5.0f / 16.0f;
-            }
-            if (y + 1 < height && x + 1 < width) {
-                image_f[idx + width * 3 + 3] += err_r * 1.0f / 16.0f;
-                image_f[idx + width * 3 + 4] += err_g * 1.0f / 16.0f;
-                image_f[idx + width * 3 + 5] += err_b * 1.0f / 16.0f;
+                if (x > 0) {
+                    int bottom_left = idx + width * 3 - 3;
+                    image_f[bottom_left]     += err_r * 3.0f / 16.0f;
+                    image_f[bottom_left + 1] += err_g * 3.0f / 16.0f;
+                    image_f[bottom_left + 2] += err_b * 3.0f / 16.0f;
+                }
+                int bottom = idx + width * 3;
+                image_f[bottom]     += err_r * 5.0f / 16.0f;
+                image_f[bottom + 1] += err_g * 5.0f / 16.0f;
+                image_f[bottom + 2] += err_b * 5.0f / 16.0f;
+                
+                if (x + 1 < width) {
+                    int bottom_right = idx + width * 3 + 3;
+                    image_f[bottom_right]     += err_r * 1.0f / 16.0f;
+                    image_f[bottom_right + 1] += err_g * 1.0f / 16.0f;
+                    image_f[bottom_right + 2] += err_b * 1.0f / 16.0f;
+                }
             }
         }
     }
 }
 
+void apply_box_blur(float *image_f, int width, int height, int blur_strength) {
+    if (blur_strength < 1) return;
+
+    int channels = 3;
+    float *temp = malloc(width * height * channels * sizeof(float));
+    if (!temp) {
+        fprintf(stderr, "Error: Could not allocate memory for blur operation.\n");
+        exit(1);
+    }
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            float sum_r = 0.0f, sum_g = 0.0f, sum_b = 0.0f;
+            int count = 0;
+            for (int i = -blur_strength; i <= blur_strength; i++) {
+                int nx = x + i;
+                if (nx < 0 || nx >= width) continue;
+                int n_idx = (y * width + nx) * channels;
+                sum_r += image_f[n_idx];
+                sum_g += image_f[n_idx + 1];
+                sum_b += image_f[n_idx + 2];
+                count++;
+            }
+            int idx = (y * width + x) * channels;
+            temp[idx]     = sum_r / count;
+            temp[idx + 1] = sum_g / count;
+            temp[idx + 2] = sum_b / count;
+        }
+    }
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            float sum_r = 0.0f, sum_g = 0.0f, sum_b = 0.0f;
+            int count = 0;
+            for (int i = -blur_strength; i <= blur_strength; i++) {
+                int ny = y + i;
+                if (ny < 0 || ny >= height) continue;
+                int n_idx = (ny * width + x) * channels;
+                sum_r += temp[n_idx];
+                sum_g += temp[n_idx + 1];
+                sum_b += temp[n_idx + 2];
+                count++;
+            }
+            int idx = (y * width + x) * channels;
+            image_f[idx]     = sum_r / count;
+            image_f[idx + 1] = sum_g / count;
+            image_f[idx + 2] = sum_b / count;
+        }
+    }
+
+    free(temp);
+}
+
 int main(int argc, char *argv[]) {
-    if (argc < 4 || argc > 5) {
-        fprintf(stderr, "Usage: %s <input_image> <output_image> <palette_file> [dither_method]\n", argv[0]);
+    int opt;
+    int blur_strength = 0;
+    int blur_flag = 0;
+
+    static struct option long_options[] = {
+        {"blur", required_argument, 0, 'b'},
+        {0, 0, 0, 0}
+    };
+
+    while ((opt = getopt_long(argc, argv, "b:", long_options, NULL)) != -1) {
+        switch (opt) {
+            case 'b':
+                blur_strength = atoi(optarg);
+                if (blur_strength < 1) {
+                    fprintf(stderr, "Error: Blur strength must be a positive integer.\n");
+                    return 1;
+                }
+                blur_flag = 1;
+                break;
+            default:
+                fprintf(stderr, "Usage: %s [options] <input_image> <output_image> <palette_file> [dither_method]\n", argv[0]);
+                fprintf(stderr, "Options:\n");
+                fprintf(stderr, "  -b, --blur <strength>    Apply blur with specified strength\n");
+                fprintf(stderr, "Available dither methods: floyd (default), bayer, ordered, nodither\n");
+                return 1;
+        }
+    }
+
+    int remaining_args = argc - optind;
+    if (remaining_args < 3 || remaining_args > 4) {
+        fprintf(stderr, "Usage: %s [options] <input_image> <output_image> <palette_file> [dither_method]\n", argv[0]);
+        fprintf(stderr, "Options:\n");
+        fprintf(stderr, "  -b, --blur <strength>    Apply blur with specified strength\n");
         fprintf(stderr, "Available dither methods: floyd (default), bayer, ordered, nodither\n");
         return 1;
     }
 
-    const char *input_path = argv[1];
-    const char *output_path = argv[2];
-    const char *palette_path = argv[3];
+    const char *input_path = argv[optind];
+    const char *output_path = argv[optind + 1];
+    const char *palette_path = argv[optind + 2];
     DitherMethod dither_method = DITHER_FLOYD_STEINBERG;
 
-    if (argc == 5) {
-        if (strcmp(argv[4], "nodither") == 0) {
+    if (remaining_args == 4) {
+        if (strcmp(argv[optind + 3], "nodither") == 0) {
             dither_method = DITHER_NONE;
-        } else if (strcmp(argv[4], "bayer") == 0) {
+        } else if (strcmp(argv[optind + 3], "bayer") == 0) {
             dither_method = DITHER_BAYER;
-        } else if (strcmp(argv[4], "ordered") == 0) {
+        } else if (strcmp(argv[optind + 3], "ordered") == 0) {
             dither_method = DITHER_ORDERED;
-        } else if (strcmp(argv[4], "floyd") == 0) {
+        } else if (strcmp(argv[optind + 3], "floyd") == 0) {
             dither_method = DITHER_FLOYD_STEINBERG;
         } else {
-            fprintf(stderr, "Unknown dither method: %s\n", argv[4]);
+            fprintf(stderr, "Unknown dither method: %s\n", argv[optind + 3]);
             fprintf(stderr, "Available methods: floyd (default), bayer, ordered, nodither\n");
             return 1;
         }
@@ -299,7 +391,7 @@ int main(int argc, char *argv[]) {
 
     float *image_f = malloc(width * height * 3 * sizeof(float));
     if (!image_f) {
-        fprintf(stderr, "Error: Could not allocate memory for dithering.\n");
+        fprintf(stderr, "Error: Could not allocate memory for image processing.\n");
         stbi_image_free(img);
         free(color_cache);
         return 1;
@@ -307,6 +399,12 @@ int main(int argc, char *argv[]) {
 
     for (int i = 0; i < width * height * 3; i++) {
         image_f[i] = (float)img[i];
+    }
+
+    if (blur_flag) {
+        printf("Applying blur with strength %d...\n", blur_strength);
+        apply_box_blur(image_f, width, height, blur_strength);
+        printf("Blur applied.\n");
     }
 
     unsigned char *output = malloc(width * height * 3);
