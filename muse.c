@@ -322,22 +322,49 @@ void apply_super8_effect(float *image_f, int width, int height, int strength) {
     }
 }
 
+void apply_super_panavision70_effect(float *image_f, int width, int height, int strength) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int idx = (y * width + x) * 3;
+            float distance = sqrtf(powf(x - width / 2.0f, 2) + powf(y - height / 2.0f, 2));
+            float max_distance = sqrtf(powf(width / 2.0f, 2) + powf(height / 2.0f, 2));
+            float vignette = 1.0f - (distance / max_distance) * 0.5f * strength;
+            image_f[idx] *= vignette;
+            image_f[idx + 1] *= vignette;
+            image_f[idx + 2] *= vignette;
+            float grain = ((rand() / (float)RAND_MAX) - 0.5f) * 2.0f * strength;
+            image_f[idx] += grain;
+            image_f[idx + 1] += grain;
+            image_f[idx + 2] += grain;
+            if (image_f[idx] < 0.0f) image_f[idx] = 0.0f;
+            if (image_f[idx] > 255.0f) image_f[idx] = 255.0f;
+            if (image_f[idx + 1] < 0.0f) image_f[idx + 1] = 0.0f;
+            if (image_f[idx + 1] > 255.0f) image_f[idx + 1] = 255.0f;
+            if (image_f[idx + 2] < 0.0f) image_f[idx + 2] = 0.0f;
+            if (image_f[idx + 2] > 255.0f) image_f[idx + 2] = 255.0f;
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
     int opt;
     int blur_strength = 0;
     int blur_flag = 0;
     int super8_strength = 0;
     int super8_flag = 0;
+    int panavision_strength = 0;
+    int panavision_flag = 0;
 
     static struct option long_options[] = {
         {"blur", required_argument, 0, 'b'},
         {"super8", required_argument, 0, 's'},
+        {"panavision", required_argument, 0, 'p'},
         {0, 0, 0, 0}
     };
 
     srand((unsigned int)time(NULL));
 
-    while ((opt = getopt_long(argc, argv, "b:s:", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:s:p:", long_options, NULL)) != -1) {
         switch (opt) {
             case 'b':
                 blur_strength = atoi(optarg);
@@ -355,11 +382,20 @@ int main(int argc, char *argv[]) {
                 }
                 super8_flag = 1;
                 break;
+            case 'p':
+                panavision_strength = atoi(optarg);
+                if (panavision_strength < 1) {
+                    fprintf(stderr, "Error: Super Panavision 70 strength must be a positive integer.\n");
+                    return 1;
+                }
+                panavision_flag = 1;
+                break;
             default:
                 fprintf(stderr, "Usage: %s [options] <input_image> <output_image> <palette_file> [dither_method]\n", argv[0]);
                 fprintf(stderr, "Options:\n");
                 fprintf(stderr, "  -b, --blur <strength>    Apply blur with specified strength\n");
                 fprintf(stderr, "  -s, --super8 <strength>  Apply Super8 effect with specified strength\n");
+                fprintf(stderr, "  -p, --panavision <strength> Apply Super Panavision 70 effect with specified strength\n");
                 fprintf(stderr, "Available dither methods: floyd (default), bayer, ordered, nodither\n");
                 return 1;
         }
@@ -371,6 +407,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Options:\n");
         fprintf(stderr, "  -b, --blur <strength>    Apply blur with specified strength\n");
         fprintf(stderr, "  -s, --super8 <strength>  Apply Super8 effect with specified strength\n");
+        fprintf(stderr, "  -p, --panavision <strength> Apply Super Panavision 70 effect with specified strength\n");
         fprintf(stderr, "Available dither methods: floyd (default), bayer, ordered, nodither\n");
         return 1;
     }
@@ -436,6 +473,12 @@ int main(int argc, char *argv[]) {
         printf("Applying Super8 effect with strength %d...\n", super8_strength);
         apply_super8_effect(image_f, width, height, super8_strength);
         printf("Super8 effect applied.\n");
+    }
+
+    if (panavision_flag) {
+        printf("Applying Super Panavision 70 effect with strength %d...\n", panavision_strength);
+        apply_super_panavision70_effect(image_f, width, height, panavision_strength);
+        printf("Super Panavision 70 effect applied.\n");
     }
 
     unsigned char *output = malloc(width * height * 3);
