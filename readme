@@ -43,7 +43,7 @@ with super panavision 70:
 ./muse -p 2 input.png output.png nord.txt                  : convert using super panavision
 ./muse -b 3 -s 2 -p 4 input.png output.png spooky-13.txt   : convert using blur, super8 & super panavision
 
-other stuff:
+with direct modification:
 • -B (brightness)
 • -C (contrast)
 • -S (saturation)
