@@ -36,8 +36,8 @@ with blur:
 ./muse -b 3 input.jpg output.png nord.txt bayer    : convert using blur & strength >>
 
 with super8 (8mm camera)
-./muse -s 3 input.png output.png croma16.txt.txt nodither  : convert using super8
-./muse -b 1 -s 4 input.jpg output.png nord.txt bayer       : convert using blur & super8
+./muse -s 3 input.png output.png croma16.txt nodither  : convert using super8
+./muse -b 1 -s 4 input.jpg output.png nord.txt bayer   : convert using blur & super8
 
 with Super Panavision 70
 ./muse -p 2 input.png output.png nord.txt                  : convert using super panavision
