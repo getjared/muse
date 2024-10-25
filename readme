@@ -39,13 +39,18 @@ with super8 (8mm camera)
 ./muse -s 3 input.png output.png croma16.txt.txt nodither  : convert using super8
 ./muse -b 1 -s 4 input.jpg output.png nord.txt bayer       : convert using blur & super8
 
+with Super Panavision 70
+./muse -p 2 input.png output.png nord.txt                  : convert using super panavision
+./muse -b 3 -s 2 -p 4 input.png output.png spooky-13.txt   : convert using blur, super8 & super panavision
+
 dithering methods:
-• floyd     : floyd-steinberg dithering (default)
-• bayer     : bayer matrix dithering
-• ordered   : ordered dithering
-• nodither  : no dithering
-• blur      : blur effect
-• super 8   : 8mm camera effect
+• floyd             : floyd-steinberg dithering (default)
+• bayer             : bayer matrix dithering
+• ordered           : ordered dithering
+• nodither          : no dithering
+• blur              : blur effect
+• super 8           : 8mm camera effect
+• super panavision  : super panavision 70 effect
 
 palettes:
 palettes are stored in /usr/local/share/muse/palettes after installation
