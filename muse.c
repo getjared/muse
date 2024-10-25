@@ -9,6 +9,7 @@
 #include <limits.h>
 #include <ctype.h>
 #include <getopt.h>
+#include <time.h>
 #include "stb_image.h"
 #include "stb_image_write.h"
 
@@ -312,17 +313,31 @@ void apply_box_blur(float *image_f, int width, int height, int blur_strength) {
     free(temp);
 }
 
+void apply_super8_effect(float *image_f, int width, int height, int strength) {
+    for (int i = 0; i < width * height * 3; i++) {
+        float noise = ((rand() / (float)RAND_MAX) - 0.5f) * 2.0f * strength;
+        image_f[i] += noise;
+        if (image_f[i] < 0.0f) image_f[i] = 0.0f;
+        if (image_f[i] > 255.0f) image_f[i] = 255.0f;
+    }
+}
+
 int main(int argc, char *argv[]) {
     int opt;
     int blur_strength = 0;
     int blur_flag = 0;
+    int super8_strength = 0;
+    int super8_flag = 0;
 
     static struct option long_options[] = {
         {"blur", required_argument, 0, 'b'},
+        {"super8", required_argument, 0, 's'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv, "b:", long_options, NULL)) != -1) {
+    srand((unsigned int)time(NULL));
+
+    while ((opt = getopt_long(argc, argv, "b:s:", long_options, NULL)) != -1) {
         switch (opt) {
             case 'b':
                 blur_strength = atoi(optarg);
@@ -332,10 +347,19 @@ int main(int argc, char *argv[]) {
                 }
                 blur_flag = 1;
                 break;
+            case 's':
+                super8_strength = atoi(optarg);
+                if (super8_strength < 1) {
+                    fprintf(stderr, "Error: Super8 strength must be a positive integer.\n");
+                    return 1;
+                }
+                super8_flag = 1;
+                break;
             default:
                 fprintf(stderr, "Usage: %s [options] <input_image> <output_image> <palette_file> [dither_method]\n", argv[0]);
                 fprintf(stderr, "Options:\n");
                 fprintf(stderr, "  -b, --blur <strength>    Apply blur with specified strength\n");
+                fprintf(stderr, "  -s, --super8 <strength>  Apply Super8 effect with specified strength\n");
                 fprintf(stderr, "Available dither methods: floyd (default), bayer, ordered, nodither\n");
                 return 1;
         }
@@ -346,6 +370,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: %s [options] <input_image> <output_image> <palette_file> [dither_method]\n", argv[0]);
         fprintf(stderr, "Options:\n");
         fprintf(stderr, "  -b, --blur <strength>    Apply blur with specified strength\n");
+        fprintf(stderr, "  -s, --super8 <strength>  Apply Super8 effect with specified strength\n");
         fprintf(stderr, "Available dither methods: floyd (default), bayer, ordered, nodither\n");
         return 1;
     }
@@ -405,6 +430,12 @@ int main(int argc, char *argv[]) {
         printf("Applying blur with strength %d...\n", blur_strength);
         apply_box_blur(image_f, width, height, blur_strength);
         printf("Blur applied.\n");
+    }
+
+    if (super8_flag) {
+        printf("Applying Super8 effect with strength %d...\n", super8_strength);
+        apply_super8_effect(image_f, width, height, super8_strength);
+        printf("Super8 effect applied.\n");
     }
 
     unsigned char *output = malloc(width * height * 3);
