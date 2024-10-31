@@ -1,4 +1,5 @@
-<p align="center">
+<div align="center">
+
 ```ascii
 
 
@@ -24,7 +25,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-pink.svg)](https://opensource.org/licenses/MIT)
 [![Made with C](https://img.shields.io/badge/Made%20with-C-purple.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
 
-</p>
+</div>
+
 ## ✧ features
 
 - 🎨 multiple dithering algorithms for that perfect retro look
