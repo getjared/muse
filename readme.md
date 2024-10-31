@@ -30,7 +30,7 @@
 ## ✧ features
 
 - 🎨 multiple dithering algorithms for that perfect retro look
-- 🌈 external palette support (compatible with PAINT.NET)
+- 🌈 external palette support
 - 🚀 lightweight and blazingly fast
 - 📦 easy installation
 
