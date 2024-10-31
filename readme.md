@@ -134,9 +134,9 @@ palettes are stored in `/usr/local/share/muse/palettes` after installation. you 
 <div align="center">
 
 ```ascii
-                    ╭─────────────────────────╮
-                    │    made with ♥ by jared  │
-                    ╰─────────────────────────╯
+╭─────────────────────────╮
+│  made with ♥ by jared   │
+╰─────────────────────────╯
 ```
 
 </div>
