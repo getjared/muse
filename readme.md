@@ -12,7 +12,7 @@
 ## ✧ features
 
 - 🎨 multiple dithering algorithms for that perfect retro look
-- 🌈 external palette support
+- 🌈 external lospc.com palette support
 - 🚀 lightweight and blazingly fast
 - 📦 easy installation
 
