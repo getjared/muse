@@ -108,6 +108,31 @@ you can directly modify image properties using these flags:
 
 palettes are stored in `/usr/local/share/muse/palettes` after installation. you can add custom palettes by copying `.txt` files to this directory. the palette format is compatible with lospec palette files (PAINT.NET txt file).
 
+### creating your own palette
+example of how to create a custom palette:
+
+```txt
+;paint.net Palette File
+;Palette Name: My Custom Theme
+;Description: A brief description of your theme
+;Colors: 16
+FF000000    ; Black
+FF1A1B26    ; Dark background
+FF415166    ; Muted blue-grey
+FFFF9B82    ; Soft coral
+FFFFB4A1    ; Light coral
+FF7BC4A3    ; Sage green
+FF98E6C0    ; Mint
+FFE6C896    ; Sand
+FFFFE2B3    ; Cream
+FF82A6D4    ; Sky blue
+FFA1C4ED    ; Light blue
+FFC49EC4    ; Dusty purple
+FFE2BCE2    ; Light purple
+FF76B9C8    ; Turquoise
+FF96D4E2    ; Light turquoise
+FFFFFFFF    ; White
+
 ## ✧ credits
 
 - [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h)
