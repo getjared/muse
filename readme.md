@@ -109,7 +109,7 @@ you can directly modify image properties using these flags:
 palettes are stored in `/usr/local/share/muse/palettes` after installation. you can add custom palettes by copying `.txt` files to this directory. the palette format is compatible with lospec palette files (PAINT.NET txt file).
 
 ### creating your own palette
-example of how to create a custom palette, you do not need all the ; little comments in there, that's just for ease of understanding
+example of how to create a custom palette, you do not need all the ; little comments in there, that's just for ease of understanding, make sure to save the palette as a yourpalettename.txt, and move it into the palettes folder.
 
 ```txt
 ;paint.net Palette File
