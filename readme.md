@@ -132,6 +132,7 @@ FFE2BCE2    ; Light purple
 FF76B9C8    ; Turquoise
 FF96D4E2    ; Light turquoise
 FFFFFFFF    ; White
+```
 
 ## ✧ credits
 
