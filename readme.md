@@ -1,28 +1,35 @@
 <div align="center">
 
 ## ｍｕｓｅ
-**[ a simple image color manipulator with vintage aesthetics ]**
+**a minimalist image processor for vintage aesthetics**
 
-[![License: Unlicense](https://img.shields.io/badge/License-Unlicense-pink.svg)](http://unlicense.org/)
-[![Made with C](https://img.shields.io/badge/Made%20with-C-purple.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
+[![license: unlicense](https://img.shields.io/badge/license-unlicense-pink.svg)](http://unlicense.org/)
+[![made with c](https://img.shields.io/badge/made%20with-c-purple.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
+[![arch linux](https://img.shields.io/badge/arch-linux-1793d1.svg)](https://archlinux.org/)
 
 </div>
 
-## ✧ features
-- multiple dithering algorithms
-- external lospc.com palette support
-- vintage film effects (Super 8, Super Panavision 70)
-- color grading options
+## overview
+muse is a high-performance image manipulation tool, it provides various dithering algorithms, effects, and color grading capabilities while maintaining minimal dependencies and blazing-fast execution.
+
+## key features
+- advanced dithering algorithms (floyd-steinberg, bayer, ordered, jjn, sierra)
+- lospec.com palette compatibility
+- vintage film emulation:
+  - super 8 grain effect
+  - super panavision 70 vignetting
+- comprehensive color grading
 - palette extraction from images
-- lightweight and blazingly fast
+- lightweight implementation in pure c
 
-## ✧ before & after
-using the catppuccin palette:
-| before | after |
-|--------|-------|
-| ![before](https://i.imgur.com/fkzmPtQ.jpg) | ![after](https://i.imgur.com/tkTjHtR.png) |
+## installation
 
-## ✧ installation
+### prerequisites
+- c compiler (gcc/clang)
+- make
+- git
+
+### build from source
 ```bash
 git clone https://github.com/getjared/muse.git
 cd muse
@@ -30,124 +37,120 @@ make
 sudo make install
 ```
 
-## ✧ dependencies
-- c compiler (gcc or clang)
-- make
-- stb_image.h (included)
-- stb_image_write.h (included)
+## usage
 
-## ✧ quick start guide
-### basic usage
+### basic operations
 ```bash
-# convert with floyd-steinberg (default)
-./muse input.jpg output.png catppuccin.txt
+# standard conversion with floyd-steinberg dithering
+muse input.jpg output.png catppuccin.txt
 
-# convert using bayer dithering
-./muse input.jpg output.bmp nord.txt bayer
+# bayer dithering
+muse input.jpg output.png nord.txt bayer
 
-# convert using ordered dithering
-./muse input.jpg output.jpg spooky-13.txt ordered
+# ordered dithering
+muse input.jpg output.png spooky-13.txt ordered
 
-# convert without dithering
-./muse input.jpg output.tga croma16.txt nodither
+# no dithering
+muse input.jpg output.png croma16.txt nodither
 
-# extract palette from an image
-./muse input.jpg -E extracted_palette.txt
+# extract palette
+muse input.jpg -E palette.txt
 ```
 
-### special effects
-#### 🌫️ blur effect
+### effects
+
+#### blur effect
 ```bash
-./muse -b 3 input.jpg output.png nord.txt bayer
+muse -b 3 input.jpg output.png nord.txt
 ```
 
-#### 📽️ super8 effect (8mm camera)
+#### film effects
 ```bash
-./muse -s 3 input.png output.png croma16.txt nodither
+# super 8 film grain
+muse -s 3 input.png output.png croma16.txt
+
+# super panavision 70
+muse -p 2 input.png output.png nord.txt
+
+# combined effects
+muse -b 3 -s 2 -p 4 input.png output.png spooky-13.txt
 ```
 
-#### 🎬 super panavision 70
+### color adjustments
+
+| parameter | flag | range | default |
+|-----------|------|-------|---------|
+| brightness | `-B` | -255.0 to 255.0 | 0.0 |
+| contrast | `-C` | 0.0 to 5.0 | 1.0 |
+| saturation | `-S` | 0.0 to 5.0 | 1.0 |
+
 ```bash
-./muse -p 2 input.png output.png nord.txt
+# example with all adjustments
+muse -B 10.0 -C 1.2 -S 1.1 input.png output.png nord.txt
 ```
 
-#### 🎨 combined effects
+## dithering algorithms
+
+| algorithm | description | best for |
+|-----------|-------------|-----------|
+| `floyd` | floyd-steinberg (default) | general purpose, smooth gradients |
+| `bayer` | ordered matrix pattern | retro graphics, consistent texture |
+| `ordered` | 8x8 threshold matrix | uniform pattern distribution |
+| `jjn` | jarvis, judice, and ninke | enhanced detail preservation |
+| `sierra` | sierra dithering | balanced error diffusion |
+| `nodither` | direct color mapping | sharp color boundaries |
+
+## palette system
+
+### location
+palettes are stored in `/usr/local/share/muse/palettes`
+
+### custom palette format
+```text
+;paint.net palette file
+;palette name: custom theme
+;colors: 16
+ff000000    ; black
+ff1a1b26    ; background
+ff415166    ; muted blue
+ffff9b82    ; coral
+[...additional colors...]
+```
+
+### palette extraction
 ```bash
-./muse -b 3 -s 2 -p 4 input.png output.png spooky-13.txt
+# extract and display
+muse input.jpg -E
+
+# extract to file
+muse input.jpg -E custom.txt
 ```
 
-### image adjustments
-you can directly modify image properties using these flags:
-| flag | description | example |
-|------|-------------|---------|
-| `-B` | brightness | `-B 10.0` |
-| `-C` | contrast | `-C 1.2` |
-| `-S` | saturation | `-S 1.1` |
-| `-E` | export palette | `-E palette.txt` |
+## supported formats
 
-#### example with all modifications
-```bash
-./muse -b 3 -s 2 -p 4 -B 10.0 -C 1.2 -S 1.1 input.png output.png nord.txt floyd
-```
+### input
+- jpg/jpeg
+- png
+- bmp
+- tga
 
-## ✧ dithering methods
-| method | description |
-|--------|-------------|
-| `floyd` | floyd-steinberg dithering (default) |
-| `bayer` | bayer matrix dithering |
-| `ordered` | ordered dithering |
-| `jjn` | jarvis, judice, and ninke dithering |
-| `sierra` | sierra dithering |
-| `nodither` | no dithering |
+### output
+- png (lossless)
+- jpg (lossy, 95% quality)
+- bmp (uncompressed)
+- tga (lossless)
 
-## ✧ palettes
-palettes are stored in `/usr/local/share/muse/palettes` after installation. you can add custom palettes by copying `.txt` files to this directory. the palette format is compatible with lospec palette files (PAINT.NET txt file).
-
-### extracting palettes
-you can extract a palette from any image using the `-E` flag:
-```bash
-# extract and display palette
-./muse input.jpg -E
-
-# extract and save to specific file
-./muse input.jpg -E custom_palette.txt
-```
-
-### creating your own palette
-example of how to create a custom palette, you do not need all the ; little comments in there, that's just for ease of understanding, make sure to save the palette as a yourpalettename.txt, and move it into the palettes folder.
-```txt
-;paint.net Palette File
-;Palette Name: My Custom Theme
-;Description: A brief description of your theme
-;Colors: 16
-FF000000    ; Black
-FF1A1B26    ; Dark background
-FF415166    ; Muted blue-grey
-FFFF9B82    ; Soft coral
-FFFFB4A1    ; Light coral
-FF7BC4A3    ; Sage green
-FF98E6C0    ; Mint
-FFE6C896    ; Sand
-FFFFE2B3    ; Cream
-FF82A6D4    ; Sky blue
-FFA1C4ED    ; Light blue
-FFC49EC4    ; Dusty purple
-FFE2BCE2    ; Light purple
-FF76B9C8    ; Turquoise
-FF96D4E2    ; Light turquoise
-FFFFFFFF    ; White
-```
-
-## ✧ credits
-- [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h)
-- [stb_image_write.h](https://github.com/nothings/stb/blob/master/stb_image_write.h)
+## acknowledgments
+- [stb_image](https://github.com/nothings/stb/blob/master/stb_image.h) - image loading
+- [stb_image_write](https://github.com/nothings/stb/blob/master/stb_image_write.h) - image saving
 
 <div align="center">
 
 ```ascii
-╭─────────────────────────╮
-│  made with ♥ by jared   │
-╰─────────────────────────╯
+╭──────────────────────╮
+│ crafted with care    │
+│ by jared             │
+╰──────────────────────╯
 ```
 
 </div>
