@@ -1,7 +1,7 @@
 <div align="center">
 
 ## ｍｕｓｅ
-**a minimalist image processor for vintage aesthetics**
+**a minimalist image processor**
 
 [![license: unlicense](https://img.shields.io/badge/license-unlicense-pink.svg)](http://unlicense.org/)
 [![made with c](https://img.shields.io/badge/made%20with-c-purple.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
