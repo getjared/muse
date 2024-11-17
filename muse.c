@@ -29,6 +29,8 @@ typedef enum {
     DITHER_FLOYD_STEINBERG,
     DITHER_ORDERED,
     DITHER_BAYER,
+    DITHER_JJN,
+    DITHER_SIERRA,
     DITHER_NONE
 } DitherMethod;
 
@@ -62,7 +64,7 @@ int color_distance_sq_custom(Color a, Color b) {
 void initialize_cache(const Theme *theme) {
     color_cache = malloc(CACHE_SIZE * sizeof(Color));
     if (!color_cache) {
-        fprintf(stderr, "Error: Could not allocate memory for color cache.\n");
+        fprintf(stderr, "error: could not allocate memory for color cache.\n");
         exit(1);
     }
     for (int r = 0; r < 32; r++) {
@@ -105,7 +107,7 @@ Theme load_palette_file(const char *filename) {
         snprintf(filepath, sizeof(filepath), "/usr/local/share/muse/palettes/%s", filename);
         file = fopen(filepath, "r");
         if (!file) {
-            fprintf(stderr, "Error: Could not open palette file '%s' or '%s'.\n", filename, filepath);
+            fprintf(stderr, "error: could not open palette file '%s' or '%s'.\n", filename, filepath);
             exit(1);
         }
     }
@@ -134,7 +136,7 @@ Theme load_palette_file(const char *filename) {
         while (*p && isspace(*p)) p++;
         if (!*p) continue;
 
-        if (strncmp(p, "FF", 2) == 0) p += 2;
+        if (strncmp(p, "ff", 2) == 0 || strncmp(p, "FF", 2) == 0) p += 2;
         
         unsigned int r, g, b;
         char hex[7];
@@ -148,11 +150,11 @@ Theme load_palette_file(const char *filename) {
                 theme.palette[theme.num_colors].b = (uint8_t)b;
                 theme.num_colors++;
             } else {
-                fprintf(stderr, "Warning: Maximum palette size of 256 colors reached. Additional colors are ignored.\n");
+                fprintf(stderr, "warning: maximum palette size of 256 colors reached. additional colors are ignored.\n");
                 break;
             }
         } else {
-            fprintf(stderr, "Warning: Invalid color format in palette file: %s", line);
+            fprintf(stderr, "warning: invalid color format in palette file: %s", line);
         }
     }
 
@@ -260,13 +262,131 @@ void apply_floyd_steinberg_dither(float *image_f, unsigned char *output, int wid
     }
 }
 
+void apply_jjn_dither(float *image_f, unsigned char *output, int width, int height, const Theme *theme) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int idx = (y * width + x) * 3;
+            Color old_pixel = {
+                clamp_float(image_f[idx]),
+                clamp_float(image_f[idx + 1]),
+                clamp_float(image_f[idx + 2])
+            };
+            Color new_pixel = find_closest_color_cached(old_pixel);
+            output[idx] = new_pixel.r;
+            output[idx + 1] = new_pixel.g;
+            output[idx + 2] = new_pixel.b;
+
+            float err_r = (float)old_pixel.r - (float)new_pixel.r;
+            float err_g = (float)old_pixel.g - (float)new_pixel.g;
+            float err_b = (float)old_pixel.b - (float)new_pixel.b;
+
+            if (x + 1 < width) {
+                int right = idx + 3;
+                image_f[right]     += err_r * 7.0f / 48.0f;
+                image_f[right + 1] += err_g * 7.0f / 48.0f;
+                image_f[right + 2] += err_b * 7.0f / 48.0f;
+            }
+            if (x + 2 < width) {
+                int right2 = idx + 6;
+                image_f[right2]     += err_r * 5.0f / 48.0f;
+                image_f[right2 + 1] += err_g * 5.0f / 48.0f;
+                image_f[right2 + 2] += err_b * 5.0f / 48.0f;
+            }
+            if (y + 1 < height) {
+                if (x > 0) {
+                    int bottom_left = idx + width * 3 - 3;
+                    image_f[bottom_left]     += err_r * 3.0f / 48.0f;
+                    image_f[bottom_left + 1] += err_g * 3.0f / 48.0f;
+                    image_f[bottom_left + 2] += err_b * 3.0f / 48.0f;
+                }
+                int bottom = idx + width * 3;
+                image_f[bottom]     += err_r * 5.0f / 48.0f;
+                image_f[bottom + 1] += err_g * 5.0f / 48.0f;
+                image_f[bottom + 2] += err_b * 5.0f / 48.0f;
+                
+                if (x + 1 < width) {
+                    int bottom_right = idx + width * 3 + 3;
+                    image_f[bottom_right]     += err_r * 7.0f / 48.0f;
+                    image_f[bottom_right + 1] += err_g * 7.0f / 48.0f;
+                    image_f[bottom_right + 2] += err_b * 7.0f / 48.0f;
+                }
+                if (x + 2 < width) {
+                    int bottom_right2 = idx + width * 3 + 6;
+                    image_f[bottom_right2]     += err_r * 5.0f / 48.0f;
+                    image_f[bottom_right2 + 1] += err_g * 5.0f / 48.0f;
+                    image_f[bottom_right2 + 2] += err_b * 5.0f / 48.0f;
+                }
+            }
+        }
+    }
+}
+
+void apply_sierra_dither(float *image_f, unsigned char *output, int width, int height, const Theme *theme) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int idx = (y * width + x) * 3;
+            Color old_pixel = {
+                clamp_float(image_f[idx]),
+                clamp_float(image_f[idx + 1]),
+                clamp_float(image_f[idx + 2])
+            };
+            Color new_pixel = find_closest_color_cached(old_pixel);
+            output[idx] = new_pixel.r;
+            output[idx + 1] = new_pixel.g;
+            output[idx + 2] = new_pixel.b;
+
+            float err_r = (float)old_pixel.r - (float)new_pixel.r;
+            float err_g = (float)old_pixel.g - (float)new_pixel.g;
+            float err_b = (float)old_pixel.b - (float)new_pixel.b;
+
+            if (x + 1 < width) {
+                int right = idx + 3;
+                image_f[right]     += err_r * 5.0f / 32.0f;
+                image_f[right + 1] += err_g * 5.0f / 32.0f;
+                image_f[right + 2] += err_b * 5.0f / 32.0f;
+            }
+            if (x + 2 < width) {
+                int right2 = idx + 6;
+                image_f[right2]     += err_r * 3.0f / 32.0f;
+                image_f[right2 + 1] += err_g * 3.0f / 32.0f;
+                image_f[right2 + 2] += err_b * 3.0f / 32.0f;
+            }
+            if (y + 1 < height) {
+                if (x > 0) {
+                    int bottom_left = idx + width * 3 - 3;
+                    image_f[bottom_left]     += err_r * 2.0f / 32.0f;
+                    image_f[bottom_left + 1] += err_g * 2.0f / 32.0f;
+                    image_f[bottom_left + 2] += err_b * 2.0f / 32.0f;
+                }
+                int bottom = idx + width * 3;
+                image_f[bottom]     += err_r * 4.0f / 32.0f;
+                image_f[bottom + 1] += err_g * 4.0f / 32.0f;
+                image_f[bottom + 2] += err_b * 4.0f / 32.0f;
+                
+                if (x + 1 < width) {
+                    int bottom_right = idx + width * 3 + 3;
+                    image_f[bottom_right]     += err_r * 5.0f / 32.0f;
+                    image_f[bottom_right + 1] += err_g * 5.0f / 32.0f;
+                    image_f[bottom_right + 2] += err_b * 5.0f / 32.0f;
+                }
+                if (x + 2 < width) {
+                    int bottom_right2 = idx + width * 3 + 6;
+                    image_f[bottom_right2]     += err_r * 3.0f / 32.0f;
+                    image_f[bottom_right2 + 1] += err_g * 3.0f / 32.0f;
+                    image_f[bottom_right2 + 2] += err_b * 3.0f / 32.0f;
+                }
+            }
+        }
+    }
+}
+
 void apply_box_blur(float *image_f, int width, int height, int blur_strength) {
     if (blur_strength < 1) return;
 
     int channels = 3;
     float *temp = malloc(width * height * channels * sizeof(float));
     if (!temp) {
-        fprintf(stderr, "Error: Could not allocate memory for blur operation.\n");
+        fprintf(stderr, "error: could not allocate memory for blur operation.\n");
         exit(1);
     }
 
@@ -367,6 +487,104 @@ void apply_color_grading(float *image_f, int width, int height, float brightness
     }
 }
 
+void display_palette(const Theme *theme) {
+    printf("palette '%s' with %d colors:\n", theme->name, theme->num_colors);
+    for(int i = 0; i < theme->num_colors; i++) {
+        printf("\033[48;2;%d;%d;%dm  \033[0m ", theme->palette[i].r, theme->palette[i].g, theme->palette[i].b);
+        if ((i + 1) % 16 == 0)
+            printf("\n");
+    }
+    if (theme->num_colors % 16 != 0)
+        printf("\n");
+}
+
+int export_palette(const Theme *theme, const char *filename) {
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        fprintf(stderr, "error: could not open file '%s' for writing.\n", filename);
+        return 1;
+    }
+    fprintf(file, "palette '%s' with %d colors:\n", theme->name, theme->num_colors);
+    for(int i = 0; i < theme->num_colors; i++) {
+        fprintf(file, "%d %d %d\n", theme->palette[i].r, theme->palette[i].g, theme->palette[i].b);
+    }
+    fclose(file);
+    return 0;
+}
+
+int extract_palette_from_image(unsigned char *img, int width, int height, Theme *theme) {
+    // Quantize colors to 12 bits (4 bits per channel)
+    unsigned int color_counts[4096] = {0};
+    for(int i = 0; i < width * height * 3; i +=3 ) {
+        unsigned int r = img[i] >> 4;
+        unsigned int g = img[i+1] >> 4;
+        unsigned int b = img[i+2] >> 4;
+        unsigned int key = (r << 8) | (g << 4) | b;
+        color_counts[key]++;
+    }
+
+    // Create an array of color keys and their counts
+    typedef struct {
+        unsigned int key;
+        unsigned int count;
+    } ColorCount;
+
+    ColorCount *cc_array = malloc(4096 * sizeof(ColorCount));
+    if (!cc_array) {
+        fprintf(stderr, "error: could not allocate memory for palette extraction.\n");
+        return 1;
+    }
+
+    int cc_size =0;
+    for(int key =0; key <4096; key++) {
+        if(color_counts[key] >0) {
+            cc_array[cc_size].key = key;
+            cc_array[cc_size].count = color_counts[key];
+            cc_size++;
+        }
+    }
+
+    // Sort the colors by count in descending order
+    for(int i =0; i < cc_size -1; i++) {
+        for(int j = i+1; j < cc_size; j++) {
+            if(cc_array[j].count > cc_array[i].count) {
+                ColorCount temp = cc_array[i];
+                cc_array[i] = cc_array[j];
+                cc_array[j] = temp;
+            }
+        }
+    }
+
+    // Take top 256 colors
+    theme->num_colors = cc_size <256 ? cc_size : 256;
+    for(int i =0; i < theme->num_colors; i++) {
+        unsigned int key = cc_array[i].key;
+        theme->palette[i].r = (key >> 8) & 0xF0;
+        theme->palette[i].g = (key >> 4) & 0xF0;
+        theme->palette[i].b = key & 0xF0;
+    }
+
+    strncpy(theme->name, "extracted_palette", sizeof(theme->name)-1);
+    theme->name[sizeof(theme->name)-1] = '\0';
+
+    free(cc_array);
+    return 0;
+}
+
+void print_usage(const char *prog_name) {
+    fprintf(stderr, "usage: %s [options] <input_image> <output_image> <palette_file> [dither_method]\n", prog_name);
+    fprintf(stderr, "options:\n");
+    fprintf(stderr, "  -b, --blur <strength>          apply blur with specified strength\n");
+    fprintf(stderr, "  -s, --super8 <strength>        apply super8 effect with specified strength\n");
+    fprintf(stderr, "  -p, --panavision <strength>    apply super panavision 70 effect with specified strength\n");
+    fprintf(stderr, "  -B, --brightness <value>       adjust brightness (float)\n");
+    fprintf(stderr, "  -C, --contrast <value>         adjust contrast (float)\n");
+    fprintf(stderr, "  -S, --saturation <value>       adjust saturation (float)\n");
+    fprintf(stderr, "  -E, --export-palette [file]    export the color palette to a .txt file\n");
+    fprintf(stderr, "  -h, --help                     display this help message\n");
+    fprintf(stderr, "available dither methods: floyd (default), bayer, ordered, jjn, sierra, nodither\n");
+}
+
 int main(int argc, char *argv[]) {
     int opt;
     int blur_strength = 0;
@@ -379,6 +597,8 @@ int main(int argc, char *argv[]) {
     float contrast = 1.0f;
     float saturation = 1.0f;
     int grading_flag = 0;
+    int export_flag = 0;
+    char export_palette_file[256] = {0};
 
     static struct option long_options[] = {
         {"blur", required_argument, 0, 'b'},
@@ -387,17 +607,19 @@ int main(int argc, char *argv[]) {
         {"brightness", required_argument, 0, 'B'},
         {"contrast", required_argument, 0, 'C'},
         {"saturation", required_argument, 0, 'S'},
+        {"export-palette", optional_argument, 0, 'E'},
+        {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
     srand((unsigned int)time(NULL));
 
-    while ((opt = getopt_long(argc, argv, "b:s:p:B:C:S:", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:s:p:B:C:S:E::h", long_options, NULL)) != -1) {
         switch (opt) {
             case 'b':
                 blur_strength = atoi(optarg);
                 if (blur_strength < 1) {
-                    fprintf(stderr, "Error: Blur strength must be a positive integer.\n");
+                    fprintf(stderr, "error: blur strength must be at least 1.\n");
                     return 1;
                 }
                 blur_flag = 1;
@@ -405,7 +627,7 @@ int main(int argc, char *argv[]) {
             case 's':
                 super8_strength = atoi(optarg);
                 if (super8_strength < 1) {
-                    fprintf(stderr, "Error: Super8 strength must be a positive integer.\n");
+                    fprintf(stderr, "error: super8 strength must be at least 1.\n");
                     return 1;
                 }
                 super8_flag = 1;
@@ -413,7 +635,7 @@ int main(int argc, char *argv[]) {
             case 'p':
                 panavision_strength = atoi(optarg);
                 if (panavision_strength < 1) {
-                    fprintf(stderr, "Error: Super Panavision 70 strength must be a positive integer.\n");
+                    fprintf(stderr, "error: panavision strength must be at least 1.\n");
                     return 1;
                 }
                 panavision_flag = 1;
@@ -430,161 +652,254 @@ int main(int argc, char *argv[]) {
                 saturation = atof(optarg);
                 grading_flag = 1;
                 break;
+            case 'E':
+                export_flag = 1;
+                if (optarg) {
+                    strncpy(export_palette_file, optarg, 255);
+                    export_palette_file[255] = '\0';
+                } else {
+                    strncpy(export_palette_file, "exported_palette.txt", 255);
+                    export_palette_file[255] = '\0';
+                }
+                break;
+            case 'h':
+                print_usage(argv[0]);
+                return 0;
             default:
-                fprintf(stderr, "Usage: %s [options] <input_image> <output_image> <palette_file> [dither_method]\n", argv[0]);
-                fprintf(stderr, "Options:\n");
-                fprintf(stderr, "  -b, --blur <strength>          Apply blur with specified strength\n");
-                fprintf(stderr, "  -s, --super8 <strength>        Apply Super8 effect with specified strength\n");
-                fprintf(stderr, "  -p, --panavision <strength>    Apply Super Panavision 70 effect with specified strength\n");
-                fprintf(stderr, "  -B, --brightness <value>       Adjust brightness (float)\n");
-                fprintf(stderr, "  -C, --contrast <value>         Adjust contrast (float)\n");
-                fprintf(stderr, "  -S, --saturation <value>       Adjust saturation (float)\n");
-                fprintf(stderr, "Available dither methods: floyd (default), bayer, ordered, nodither\n");
+                print_usage(argv[0]);
                 return 1;
         }
     }
 
     int remaining_args = argc - optind;
-    if (remaining_args < 3 || remaining_args > 4) {
-        fprintf(stderr, "Usage: %s [options] <input_image> <output_image> <palette_file> [dither_method]\n", argv[0]);
-        fprintf(stderr, "Options:\n");
-        fprintf(stderr, "  -b, --blur <strength>          Apply blur with specified strength\n");
-        fprintf(stderr, "  -s, --super8 <strength>        Apply Super8 effect with specified strength\n");
-        fprintf(stderr, "  -p, --panavision <strength>    Apply Super Panavision 70 effect with specified strength\n");
-        fprintf(stderr, "  -B, --brightness <value>       Adjust brightness (float)\n");
-        fprintf(stderr, "  -C, --contrast <value>         Adjust contrast (float)\n");
-        fprintf(stderr, "  -S, --saturation <value>       Adjust saturation (float)\n");
-        fprintf(stderr, "Available dither methods: floyd (default), bayer, ordered, nodither\n");
-        return 1;
-    }
+    if (export_flag && remaining_args == 1) {
+        // Extraction mode: ./muse input.jpg -E [export_file]
+        const char *input_path = argv[optind];
+        Theme extracted_theme;
 
-    const char *input_path = argv[optind];
-    const char *output_path = argv[optind + 1];
-    const char *palette_path = argv[optind + 2];
-    DitherMethod dither_method = DITHER_FLOYD_STEINBERG;
-
-    if (remaining_args == 4) {
-        if (strcmp(argv[optind + 3], "nodither") == 0) {
-            dither_method = DITHER_NONE;
-        } else if (strcmp(argv[optind + 3], "bayer") == 0) {
-            dither_method = DITHER_BAYER;
-        } else if (strcmp(argv[optind + 3], "ordered") == 0) {
-            dither_method = DITHER_ORDERED;
-        } else if (strcmp(argv[optind + 3], "floyd") == 0) {
-            dither_method = DITHER_FLOYD_STEINBERG;
-        } else {
-            fprintf(stderr, "Unknown dither method: %s\n", argv[optind + 3]);
-            fprintf(stderr, "Available methods: floyd (default), bayer, ordered, nodither\n");
+        // Load image
+        int width, height, channels;
+        unsigned char *img = stbi_load(input_path, &width, &height, &channels, 3);
+        if (!img) {
+            fprintf(stderr, "error: could not load input image '%s'.\n", input_path);
             return 1;
         }
-    }
 
-    Theme theme = load_palette_file(palette_path);
-    if (theme.num_colors == 0) {
-        fprintf(stderr, "Error: No valid colors found in palette file '%s'.\n", palette_path);
-        return 1;
-    }
+        // Extract palette
+        if (extract_palette_from_image(img, width, height, &extracted_theme) != 0) {
+            stbi_image_free(img);
+            return 1;
+        }
 
-    printf("Loaded palette '%s' with %d colors\n", theme.name, theme.num_colors);
+        // Display palette
+        display_palette(&extracted_theme);
 
-    initialize_cache(&theme);
-
-    int width, height, channels;
-    unsigned char *img = stbi_load(input_path, &width, &height, &channels, 3);
-    if (!img) {
-        fprintf(stderr, "Error: Could not load image '%s'.\n", input_path);
-        free(color_cache);
-        return 1;
-    }
-
-    float *image_f = malloc(width * height * 3 * sizeof(float));
-    if (!image_f) {
-        fprintf(stderr, "Error: Could not allocate memory for image processing.\n");
-        stbi_image_free(img);
-        free(color_cache);
-        return 1;
-    }
-
-    for (int i = 0; i < width * height * 3; i++) {
-        image_f[i] = (float)img[i];
-    }
-
-    if (blur_flag) {
-        printf("Applying blur with strength %d...\n", blur_strength);
-        apply_box_blur(image_f, width, height, blur_strength);
-        printf("Blur applied.\n");
-    }
-
-    if (super8_flag) {
-        printf("Applying Super8 effect with strength %d...\n", super8_strength);
-        apply_super8_effect(image_f, width, height, super8_strength);
-        printf("Super8 effect applied.\n");
-    }
-
-    if (panavision_flag) {
-        printf("Applying Super Panavision 70 effect with strength %d...\n", panavision_strength);
-        apply_super_panavision70_effect(image_f, width, height, panavision_strength);
-        printf("Super Panavision 70 effect applied.\n");
-    }
-
-    if (grading_flag) {
-        printf("Applying color grading with brightness %.2f, contrast %.2f, saturation %.2f...\n", brightness, contrast, saturation);
-        apply_color_grading(image_f, width, height, brightness, contrast, saturation);
-        printf("Color grading applied.\n");
-    }
-
-    unsigned char *output = malloc(width * height * 3);
-    if (!output) {
-        fprintf(stderr, "Error: Could not allocate memory for output image.\n");
-        free(image_f);
-        stbi_image_free(img);
-        free(color_cache);
-        return 1;
-    }
-
-    switch (dither_method) {
-        case DITHER_FLOYD_STEINBERG:
-            apply_floyd_steinberg_dither(image_f, output, width, height, &theme);
-            break;
-        case DITHER_ORDERED:
-            apply_ordered_dither(image_f, output, width, height, &theme);
-            break;
-        case DITHER_BAYER:
-            apply_bayer_dither(image_f, output, width, height, &theme);
-            break;
-        case DITHER_NONE:
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    int idx = (y * width + x) * 3;
-                    Color old_pixel = {
-                        clamp_float(image_f[idx]),
-                        clamp_float(image_f[idx + 1]),
-                        clamp_float(image_f[idx + 2])
-                    };
-                    Color new_pixel = find_closest_color_cached(old_pixel);
-                    output[idx] = new_pixel.r;
-                    output[idx + 1] = new_pixel.g;
-                    output[idx + 2] = new_pixel.b;
-                }
+        // Export palette
+        if (export_flag) {
+            if (export_palette(&extracted_theme, export_palette_file) == 0) {
+                printf("palette exported to '%s'.\n", export_palette_file);
+            } else {
+                printf("failed to export palette to '%s'.\n", export_palette_file);
             }
-            break;
-    }
+        }
 
-    int success = stbi_write_png(output_path, width, height, 3, output, width * 3);
-    if (!success) {
-        fprintf(stderr, "Error: Could not write image '%s'.\n", output_path);
+        // Cleanup
+        stbi_image_free(img);
+        return 0;
+    } else {
+        // Conversion mode: ./muse [options] <input_image> <output_image> <palette_file> [dither_method]
+        if (remaining_args < 3 || remaining_args > 4) {
+            print_usage(argv[0]);
+            return 1;
+        }
+
+        const char *input_path = argv[optind];
+        const char *output_path = argv[optind + 1];
+        const char *palette_path = argv[optind + 2];
+        DitherMethod dither_method = DITHER_FLOYD_STEINBERG;
+
+        if (remaining_args == 4) {
+            if (strcmp(argv[optind + 3], "nodither") == 0) {
+                dither_method = DITHER_NONE;
+            } else if (strcmp(argv[optind + 3], "bayer") == 0) {
+                dither_method = DITHER_BAYER;
+            } else if (strcmp(argv[optind + 3], "ordered") == 0) {
+                dither_method = DITHER_ORDERED;
+            } else if (strcmp(argv[optind + 3], "floyd") == 0) {
+                dither_method = DITHER_FLOYD_STEINBERG;
+            } else if (strcmp(argv[optind + 3], "jjn") == 0) {
+                dither_method = DITHER_JJN;
+            } else if (strcmp(argv[optind + 3], "sierra") == 0) {
+                dither_method = DITHER_SIERRA;
+            } else {
+                fprintf(stderr, "error: unknown dither method '%s'.\n", argv[optind + 3]);
+                print_usage(argv[0]);
+                return 1;
+            }
+        }
+
+        Theme theme = load_palette_file(palette_path);
+        if (theme.num_colors == 0) {
+            fprintf(stderr, "error: palette file '%s' contains no colors.\n", palette_path);
+            return 1;
+        }
+
+        initialize_cache(&theme);
+
+        // Load input image
+        int width_img, height_img, channels_img;
+        unsigned char *img = stbi_load(input_path, &width_img, &height_img, &channels_img, 3);
+        if (!img) {
+            fprintf(stderr, "error: could not load input image '%s'.\n", input_path);
+            free(color_cache);
+            return 1;
+        }
+
+        // Convert image to float
+        float *image_f = malloc(width_img * height_img * 3 * sizeof(float));
+        if (!image_f) {
+            fprintf(stderr, "error: could not allocate memory for image processing.\n");
+            stbi_image_free(img);
+            free(color_cache);
+            return 1;
+        }
+
+        for (int i = 0; i < width_img * height_img * 3; i++) {
+            image_f[i] = (float)img[i];
+        }
+
+        // Apply effects
+        if (blur_flag) {
+            apply_box_blur(image_f, width_img, height_img, blur_strength);
+        }
+
+        if (super8_flag) {
+            apply_super8_effect(image_f, width_img, height_img, super8_strength);
+        }
+
+        if (panavision_flag) {
+            apply_super_panavision70_effect(image_f, width_img, height_img, panavision_strength);
+        }
+
+        if (grading_flag) {
+            apply_color_grading(image_f, width_img, height_img, brightness, contrast, saturation);
+        }
+
+        // Allocate output image buffer
+        unsigned char *output = malloc(width_img * height_img * 3);
+        if (!output) {
+            fprintf(stderr, "error: could not allocate memory for output image.\n");
+            free(image_f);
+            stbi_image_free(img);
+            free(color_cache);
+            return 1;
+        }
+
+        // Apply dithering
+        switch (dither_method) {
+            case DITHER_FLOYD_STEINBERG:
+                apply_floyd_steinberg_dither(image_f, output, width_img, height_img, &theme);
+                break;
+            case DITHER_ORDERED:
+                apply_ordered_dither(image_f, output, width_img, height_img, &theme);
+                break;
+            case DITHER_BAYER:
+                apply_bayer_dither(image_f, output, width_img, height_img, &theme);
+                break;
+            case DITHER_JJN:
+                apply_jjn_dither(image_f, output, width_img, height_img, &theme);
+                break;
+            case DITHER_SIERRA:
+                apply_sierra_dither(image_f, output, width_img, height_img, &theme);
+                break;
+            case DITHER_NONE:
+                for (int y = 0; y < height_img; y++) {
+                    for (int x = 0; x < width_img; x++) {
+                        int idx = (y * width_img + x) * 3;
+                        Color old_pixel = {
+                            clamp_float(image_f[idx]),
+                            clamp_float(image_f[idx + 1]),
+                            clamp_float(image_f[idx + 2])
+                        };
+                        Color new_pixel = find_closest_color_cached(old_pixel);
+                        output[idx] = new_pixel.r;
+                        output[idx + 1] = new_pixel.g;
+                        output[idx + 2] = new_pixel.b;
+                    }
+                }
+                break;
+        }
+
+        // Write output image
+        int success = stbi_write_png(output_path, width_img, height_img, 3, output, width_img * 3);
+        if (!success) {
+            fprintf(stderr, "error: could not write output image to '%s'.\n", output_path);
+            free(output);
+            free(image_f);
+            stbi_image_free(img);
+            free(color_cache);
+            return 1;
+        }
+
+        // Display palette
+        display_palette(&theme);
+
+        // Export palette if requested
+        if (export_flag && ! (remaining_args ==1)) { // Ensure not in extraction mode
+            if (export_palette(&theme, export_palette_file) == 0) {
+                printf("palette exported to '%s'.\n", export_palette_file);
+            } else {
+                printf("failed to export palette to '%s'.\n", export_palette_file);
+            }
+        }
+
+        // Output information
+        printf("image converted successfully and saved to '%s'.\n", output_path);
+        printf("settings used:\n");
+        printf("  input image: %s\n", input_path);
+        printf("  output image: %s\n", output_path);
+        printf("  palette file: %s\n", palette_path);
+        printf("  dither method: ");
+        switch (dither_method) {
+            case DITHER_FLOYD_STEINBERG:
+                printf("floyd-steinberg\n");
+                break;
+            case DITHER_ORDERED:
+                printf("ordered\n");
+                break;
+            case DITHER_BAYER:
+                printf("bayer\n");
+                break;
+            case DITHER_JJN:
+                printf("jarvis, judice, and ninke\n");
+                break;
+            case DITHER_SIERRA:
+                printf("sierra\n");
+                break;
+            case DITHER_NONE:
+                printf("no dither\n");
+                break;
+        }
+        if (blur_flag) {
+            printf("  blur strength: %d\n", blur_strength);
+        }
+        if (super8_flag) {
+            printf("  super8 strength: %d\n", super8_strength);
+        }
+        if (panavision_flag) {
+            printf("  panavision strength: %d\n", panavision_strength);
+        }
+        if (grading_flag) {
+            printf("  brightness: %.2f\n", brightness);
+            printf("  contrast: %.2f\n", contrast);
+            printf("  saturation: %.2f\n", saturation);
+        }
+
+        // Cleanup
         free(output);
         free(image_f);
         stbi_image_free(img);
         free(color_cache);
-        return 1;
+        return 0;
     }
-
-    printf("Image converted successfully and saved to '%s'.\n", output_path);
-
-    free(output);
-    free(image_f);
-    stbi_image_free(img);
-    free(color_cache);
-    return 0;
 }
