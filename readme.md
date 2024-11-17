@@ -1,7 +1,6 @@
 <div align="center">
 
 ## ｍｕｓｅ
-
 **[ a simple image color manipulator with vintage aesthetics ]**
 
 [![License: Unlicense](https://img.shields.io/badge/License-Unlicense-pink.svg)](http://unlicense.org/)
@@ -10,22 +9,21 @@
 </div>
 
 ## ✧ features
-
 - 🎨 multiple dithering algorithms for that perfect retro look
 - 🌈 external lospc.com palette support
+- 🎞️ vintage film effects (Super 8, Super Panavision 70)
+- 🎯 advanced color grading options
+- 🔄 palette extraction from images
 - 🚀 lightweight and blazingly fast
 - 📦 easy installation
 
 ## ✧ before & after
-
 using the catppuccin palette:
-
 | before | after |
 |--------|-------|
 | ![before](https://i.imgur.com/fkzmPtQ.jpg) | ![after](https://i.imgur.com/tkTjHtR.png) |
 
 ## ✧ installation
-
 ```bash
 git clone https://github.com/getjared/muse.git
 cd muse
@@ -34,16 +32,13 @@ sudo make install
 ```
 
 ## ✧ dependencies
-
 - 📝 c compiler (gcc or clang)
 - 🔧 make
 - 📚 stb_image.h (included)
 - 📚 stb_image_write.h (included)
 
 ## ✧ quick start guide
-
 ### basic usage
-
 ```bash
 # convert with floyd-steinberg (default)
 ./muse input.jpg output.png catppuccin.txt
@@ -56,10 +51,12 @@ sudo make install
 
 # convert without dithering
 ./muse input.jpg output.png croma16.txt nodither
+
+# extract palette from an image
+./muse input.jpg -E extracted_palette.txt
 ```
 
 ### special effects
-
 #### 🌫️ blur effect
 ```bash
 ./muse -b 3 input.jpg output.png nord.txt bayer
@@ -81,14 +78,13 @@ sudo make install
 ```
 
 ### image adjustments
-
 you can directly modify image properties using these flags:
-
 | flag | description | example |
 |------|-------------|---------|
 | `-B` | brightness | `-B 10.0` |
 | `-C` | contrast | `-C 1.2` |
 | `-S` | saturation | `-S 1.1` |
+| `-E` | export palette | `-E palette.txt` |
 
 #### example with all modifications
 ```bash
@@ -96,21 +92,30 @@ you can directly modify image properties using these flags:
 ```
 
 ## ✧ dithering methods
-
 | method | description |
 |--------|-------------|
 | `floyd` | floyd-steinberg dithering (default) |
 | `bayer` | bayer matrix dithering |
 | `ordered` | ordered dithering |
+| `jjn` | jarvis, judice, and ninke dithering |
+| `sierra` | sierra dithering |
 | `nodither` | no dithering |
 
 ## ✧ palettes
-
 palettes are stored in `/usr/local/share/muse/palettes` after installation. you can add custom palettes by copying `.txt` files to this directory. the palette format is compatible with lospec palette files (PAINT.NET txt file).
+
+### extracting palettes
+you can extract a palette from any image using the `-E` flag:
+```bash
+# extract and display palette
+./muse input.jpg -E
+
+# extract and save to specific file
+./muse input.jpg -E custom_palette.txt
+```
 
 ### creating your own palette
 example of how to create a custom palette, you do not need all the ; little comments in there, that's just for ease of understanding, make sure to save the palette as a yourpalettename.txt, and move it into the palettes folder.
-
 ```txt
 ;paint.net Palette File
 ;Palette Name: My Custom Theme
@@ -135,7 +140,6 @@ FFFFFFFF    ; White
 ```
 
 ## ✧ credits
-
 - [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h)
 - [stb_image_write.h](https://github.com/nothings/stb/blob/master/stb_image_write.h)
 
