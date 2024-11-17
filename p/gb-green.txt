@@ -1,0 +1,8 @@
+;paint.net Palette File
+;Palette Name: GameBoy Classic
+;Description: The original 4-color palette of the Nintendo Game Boy
+;Colors: 4
+FF0F380F    ; Darkest Green
+FF306230    ; Dark Green
+FF8BAC0F    ; Light Green
+FF9BBC0F    ; Lightest Green
