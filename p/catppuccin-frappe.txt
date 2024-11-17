@@ -1,0 +1,30 @@
+;paint.net Palette File
+;Palette Name: Catppuccin Frappe
+;Description: 🧋 Soothing pastel theme for the high-spirited!
+;Colors: 26
+FF303446    ; Base
+FF292c3c    ; Mantle
+FF232634    ; Crust
+FFc6d0f5    ; Text
+FFb5bfe2    ; Subtext0
+FFa5adce    ; Subtext1
+FF949cbb    ; Surface2
+FF838ba7    ; Surface1
+FF737994    ; Surface0
+FF626880    ; Overlay2
+FF51576d    ; Overlay1
+FF414559    ; Overlay0
+FFf2d5cf    ; Rosewater
+FFeebebe    ; Flamingo
+FFf4b8e4    ; Pink
+FFca9ee6    ; Mauve
+FFe78284    ; Red
+FFea999c    ; Maroon
+FFef9f76    ; Peach
+FFe5c890    ; Yellow
+FFa6d189    ; Green
+FF81c8be    ; Teal
+FF99d1db    ; Sky
+FF85c1dc    ; Sapphire
+FF8caaee    ; Blue
+FFbabbf1    ; Lavender

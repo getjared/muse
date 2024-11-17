@@ -1,0 +1,30 @@
+;paint.net Palette File
+;Palette Name: Catppuccin Mocha
+;Description: 🧋 Soothing pastel theme for the high-spirited!
+;Colors: 26
+FF1e1e2e    ; Base
+FF181825    ; Mantle
+FF11111b    ; Crust
+FFcdd6f4    ; Text
+FFbac2de    ; Subtext0
+FFa6adc8    ; Subtext1
+FF9399b2    ; Surface2
+FF7f849c    ; Surface1
+FF6c7086    ; Surface0
+FF585b70    ; Overlay2
+FF45475a    ; Overlay1
+FF313244    ; Overlay0
+FFf5e0dc    ; Rosewater
+FFf2cdcd    ; Flamingo
+FFf5c2e7    ; Pink
+FFcba6f7    ; Mauve
+FFf38ba8    ; Red
+FFeba0ac    ; Maroon
+FFfab387    ; Peach
+FFf9e2af    ; Yellow
+FFa6e3a1    ; Green
+FF94e2d5    ; Teal
+FF89dceb    ; Sky
+FF74c7ec    ; Sapphire
+FF89b4fa    ; Blue
+FFb4befe    ; Lavender

@@ -1,0 +1,30 @@
+;paint.net Palette File
+;Palette Name: Catppuccin Macchiato
+;Description: 🧋 Soothing pastel theme for the high-spirited!
+;Colors: 26
+FF24273a    ; Base
+FF1e2030    ; Mantle
+FF181926    ; Crust
+FFcad3f5    ; Text
+FFb8c0e0    ; Subtext0
+FFa5adcb    ; Subtext1
+FF939ab7    ; Surface2
+FF8087a2    ; Surface1
+FF6e738d    ; Surface0
+FF5b6078    ; Overlay2
+FF494d64    ; Overlay1
+FF363a4f    ; Overlay0
+FFf4dbd6    ; Rosewater
+FFf0c6c6    ; Flamingo
+FFf5bde6    ; Pink
+FFc6a0f6    ; Mauve
+FFed8796    ; Red
+FFee99a0    ; Maroon
+FFf5a97f    ; Peach
+FFeed49f    ; Yellow
+FFa6da95    ; Green
+FF8bd5ca    ; Teal
+FF91d7e3    ; Sky
+FF7dc4e4    ; Sapphire
+FF8aadf4    ; Blue
+FFb7bdf8    ; Lavender

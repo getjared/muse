@@ -1,0 +1,30 @@
+;paint.net Palette File
+;Palette Name: Catppuccin Latte
+;Description: 🧋 Soothing pastel theme for the high-spirited!
+;Colors: 26
+FFeff1f5    ; Base
+FFe6e9ef    ; Mantle
+FFdce0e8    ; Crust
+FF4c4f69    ; Text
+FF6c6f85    ; Subtext0
+FF7c7f93    ; Subtext1
+FF8c8fa1    ; Surface2
+FF9ca0b0    ; Surface1
+FFacb0be    ; Surface0
+FFbcc0cc    ; Overlay2
+FFccd0da    ; Overlay1
+FFdce0e8    ; Overlay0
+FFdc8a78    ; Rosewater
+FFdd7878    ; Flamingo
+FFea76cb    ; Pink
+FF8839ef    ; Mauve
+FFd20f39    ; Red
+FFe64553    ; Maroon
+FFfe640b    ; Peach
+FFdf8e1d    ; Yellow
+FF40a02b    ; Green
+FF179299    ; Teal
+FF04a5e5    ; Sky
+FF209fb5    ; Sapphire
+FF1e66f5    ; Blue
+FF7287fd    ; Lavender
