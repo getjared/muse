@@ -513,7 +513,6 @@ int export_palette(const Theme *theme, const char *filename) {
 }
 
 int extract_palette_from_image(unsigned char *img, int width, int height, Theme *theme) {
-    // Quantize colors to 12 bits (4 bits per channel)
     unsigned int color_counts[4096] = {0};
     for(int i = 0; i < width * height * 3; i +=3 ) {
         unsigned int r = img[i] >> 4;
@@ -523,7 +522,6 @@ int extract_palette_from_image(unsigned char *img, int width, int height, Theme 
         color_counts[key]++;
     }
 
-    // Create an array of color keys and their counts
     typedef struct {
         unsigned int key;
         unsigned int count;
@@ -544,7 +542,6 @@ int extract_palette_from_image(unsigned char *img, int width, int height, Theme 
         }
     }
 
-    // Sort the colors by count in descending order
     for(int i =0; i < cc_size -1; i++) {
         for(int j = i+1; j < cc_size; j++) {
             if(cc_array[j].count > cc_array[i].count) {
@@ -555,7 +552,6 @@ int extract_palette_from_image(unsigned char *img, int width, int height, Theme 
         }
     }
 
-    // Take top 256 colors
     theme->num_colors = cc_size <256 ? cc_size : 256;
     for(int i =0; i < theme->num_colors; i++) {
         unsigned int key = cc_array[i].key;
@@ -679,11 +675,9 @@ int main(int argc, char *argv[]) {
 
     int remaining_args = argc - optind;
     if (export_flag && remaining_args == 1) {
-        // Extraction mode: ./muse input.jpg -E [export_file]
         const char *input_path = argv[optind];
         Theme extracted_theme;
 
-        // Load image
         int width, height, channels;
         unsigned char *img = stbi_load(input_path, &width, &height, &channels, 3);
         if (!img) {
@@ -691,16 +685,13 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        // Extract palette
         if (extract_palette_from_image(img, width, height, &extracted_theme) != 0) {
             stbi_image_free(img);
             return 1;
         }
 
-        // Display palette
         display_palette(&extracted_theme);
 
-        // Export palette
         if (export_flag) {
             if (export_palette(&extracted_theme, export_palette_file) == 0) {
                 printf("palette exported to '%s'.\n", export_palette_file);
@@ -709,11 +700,9 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        // Cleanup
         stbi_image_free(img);
         return 0;
     } else {
-        // Conversion mode: ./muse [options] <input_image> <output_image> <palette_file> [dither_method]
         if (remaining_args < 3 || remaining_args > 4) {
             print_usage(argv[0]);
             return 1;
@@ -752,7 +741,6 @@ int main(int argc, char *argv[]) {
 
         initialize_cache(&theme);
 
-        // Load input image
         int width_img, height_img, channels_img;
         unsigned char *img = stbi_load(input_path, &width_img, &height_img, &channels_img, 3);
         if (!img) {
@@ -761,7 +749,6 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        // Convert image to float
         float *image_f = malloc(width_img * height_img * 3 * sizeof(float));
         if (!image_f) {
             fprintf(stderr, "error: could not allocate memory for image processing.\n");
@@ -774,7 +761,6 @@ int main(int argc, char *argv[]) {
             image_f[i] = (float)img[i];
         }
 
-        // Apply effects
         if (blur_flag) {
             apply_box_blur(image_f, width_img, height_img, blur_strength);
         }
@@ -791,7 +777,6 @@ int main(int argc, char *argv[]) {
             apply_color_grading(image_f, width_img, height_img, brightness, contrast, saturation);
         }
 
-        // Allocate output image buffer
         unsigned char *output = malloc(width_img * height_img * 3);
         if (!output) {
             fprintf(stderr, "error: could not allocate memory for output image.\n");
@@ -801,7 +786,6 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        // Apply dithering
         switch (dither_method) {
             case DITHER_FLOYD_STEINBERG:
                 apply_floyd_steinberg_dither(image_f, output, width_img, height_img, &theme);
@@ -836,14 +820,13 @@ int main(int argc, char *argv[]) {
                 break;
         }
 
-        // Write output image based on file extension
         const char* ext = get_file_extension(output_path);
         int success = 0;
 
         if (strcasecmp(ext, "png") == 0) {
             success = stbi_write_png(output_path, width_img, height_img, 3, output, width_img * 3);
         } else if (strcasecmp(ext, "jpg") == 0 || strcasecmp(ext, "jpeg") == 0) {
-            success = stbi_write_jpg(output_path, width_img, height_img, 3, output, 95); // 95 is quality
+            success = stbi_write_jpg(output_path, width_img, height_img, 3, output, 95);
         } else if (strcasecmp(ext, "bmp") == 0) {
             success = stbi_write_bmp(output_path, width_img, height_img, 3, output);
         } else if (strcasecmp(ext, "tga") == 0) {
@@ -866,11 +849,9 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        // Display palette
         display_palette(&theme);
 
-        // Export palette if requested
-        if (export_flag && !(remaining_args == 1)) { // Ensure not in extraction mode
+        if (export_flag && !(remaining_args == 1)) {
             if (export_palette(&theme, export_palette_file) == 0) {
                 printf("palette exported to '%s'.\n", export_palette_file);
             } else {
@@ -878,7 +859,6 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        // Output information
         printf("image converted successfully and saved to '%s'.\n", output_path);
         printf("settings used:\n");
         printf("  input image: %s\n", input_path);
@@ -920,7 +900,6 @@ int main(int argc, char *argv[]) {
             printf("  saturation: %.2f\n", saturation);
         }
 
-        // Cleanup
         free(output);
         free(image_f);
         stbi_image_free(img);
