@@ -44,13 +44,13 @@ sudo make install
 ./muse input.jpg output.png catppuccin.txt
 
 # convert using bayer dithering
-./muse input.jpg output.png nord.txt bayer
+./muse input.jpg output.bmp nord.txt bayer
 
 # convert using ordered dithering
-./muse input.jpg output.png spooky-13.txt ordered
+./muse input.jpg output.jpg spooky-13.txt ordered
 
 # convert without dithering
-./muse input.jpg output.png croma16.txt nodither
+./muse input.jpg output.tga croma16.txt nodither
 
 # extract palette from an image
 ./muse input.jpg -E extracted_palette.txt
