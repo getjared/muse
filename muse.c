@@ -585,6 +585,12 @@ void print_usage(const char *prog_name) {
     fprintf(stderr, "available dither methods: floyd (default), bayer, ordered, jjn, sierra, nodither\n");
 }
 
+const char* get_file_extension(const char* filename) {
+    const char* dot = strrchr(filename, '.');
+    if (!dot || dot == filename) return "";
+    return dot + 1;
+}
+
 int main(int argc, char *argv[]) {
     int opt;
     int blur_strength = 0;
@@ -830,8 +836,27 @@ int main(int argc, char *argv[]) {
                 break;
         }
 
-        // Write output image
-        int success = stbi_write_png(output_path, width_img, height_img, 3, output, width_img * 3);
+        // Write output image based on file extension
+        const char* ext = get_file_extension(output_path);
+        int success = 0;
+
+        if (strcasecmp(ext, "png") == 0) {
+            success = stbi_write_png(output_path, width_img, height_img, 3, output, width_img * 3);
+        } else if (strcasecmp(ext, "jpg") == 0 || strcasecmp(ext, "jpeg") == 0) {
+            success = stbi_write_jpg(output_path, width_img, height_img, 3, output, 95); // 95 is quality
+        } else if (strcasecmp(ext, "bmp") == 0) {
+            success = stbi_write_bmp(output_path, width_img, height_img, 3, output);
+        } else if (strcasecmp(ext, "tga") == 0) {
+            success = stbi_write_tga(output_path, width_img, height_img, 3, output);
+        } else {
+            fprintf(stderr, "error: unsupported output format '%s'. supported formats: png, jpg, bmp, tga\n", ext);
+            free(output);
+            free(image_f);
+            stbi_image_free(img);
+            free(color_cache);
+            return 1;
+        }
+
         if (!success) {
             fprintf(stderr, "error: could not write output image to '%s'.\n", output_path);
             free(output);
@@ -845,7 +870,7 @@ int main(int argc, char *argv[]) {
         display_palette(&theme);
 
         // Export palette if requested
-        if (export_flag && ! (remaining_args ==1)) { // Ensure not in extraction mode
+        if (export_flag && !(remaining_args == 1)) { // Ensure not in extraction mode
             if (export_palette(&theme, export_palette_file) == 0) {
                 printf("palette exported to '%s'.\n", export_palette_file);
             } else {
