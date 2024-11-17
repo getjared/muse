@@ -9,13 +9,12 @@
 </div>
 
 ## ✧ features
-- 🎨 multiple dithering algorithms for that perfect retro look
-- 🌈 external lospc.com palette support
-- 🎞️ vintage film effects (Super 8, Super Panavision 70)
-- 🎯 advanced color grading options
-- 🔄 palette extraction from images
-- 🚀 lightweight and blazingly fast
-- 📦 easy installation
+- multiple dithering algorithms
+- external lospc.com palette support
+- vintage film effects (Super 8, Super Panavision 70)
+- color grading options
+- palette extraction from images
+- lightweight and blazingly fast
 
 ## ✧ before & after
 using the catppuccin palette:
@@ -32,10 +31,10 @@ sudo make install
 ```
 
 ## ✧ dependencies
-- 📝 c compiler (gcc or clang)
-- 🔧 make
-- 📚 stb_image.h (included)
-- 📚 stb_image_write.h (included)
+- c compiler (gcc or clang)
+- make
+- stb_image.h (included)
+- stb_image_write.h (included)
 
 ## ✧ quick start guide
 ### basic usage
