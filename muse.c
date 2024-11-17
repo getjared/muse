@@ -504,10 +504,16 @@ int export_palette(const Theme *theme, const char *filename) {
         fprintf(stderr, "error: could not open file '%s' for writing.\n", filename);
         return 1;
     }
-    fprintf(file, "palette '%s' with %d colors:\n", theme->name, theme->num_colors);
+
+    fprintf(file, ";paint.net Palette File\n");
+    fprintf(file, ";Palette Name: %s\n", theme->name);
+    fprintf(file, ";Description: Extracted palette from image\n");
+    fprintf(file, ";Colors: %d\n", theme->num_colors);
+
     for(int i = 0; i < theme->num_colors; i++) {
-        fprintf(file, "%d %d %d\n", theme->palette[i].r, theme->palette[i].g, theme->palette[i].b);
+        fprintf(file, "FF%02X%02X%02X\n", theme->palette[i].r, theme->palette[i].g, theme->palette[i].b);
     }
+
     fclose(file);
     return 0;
 }
