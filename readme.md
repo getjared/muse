@@ -12,6 +12,13 @@
 ## overview
 muse is a high-performance image manipulation tool, it provides various dithering algorithms, effects, and color grading capabilities while maintaining minimal dependencies and blazing-fast execution.
 
+## before & after
+using the catppuccin palette:
+| before | after |
+|--------|-------|
+| ![before](https://i.imgur.com/fkzmPtQ.jpg) | ![after](https://i.imgur.com/tkTjHtR.png) |
+
+
 ## key features
 - advanced dithering algorithms (floyd-steinberg, bayer, ordered, jjn, sierra)
 - lospec.com palette compatibility
