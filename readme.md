@@ -5,7 +5,6 @@
 
 [![license: unlicense](https://img.shields.io/badge/license-unlicense-pink.svg)](http://unlicense.org/)
 [![made with c](https://img.shields.io/badge/made%20with-c-purple.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
-[![arch linux](https://img.shields.io/badge/arch-linux-1793d1.svg)](https://archlinux.org/)
 
 </div>
 
