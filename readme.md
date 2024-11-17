@@ -110,6 +110,7 @@ muse -B 10.0 -C 1.2 -S 1.1 input.png output.png nord.txt
 
 ### location
 palettes are stored in `/usr/local/share/muse/palettes`
+once installed you can list all palettes in that location with -l
 
 ### custom palette format
 ```text
