@@ -105,7 +105,7 @@ muse -B 10.0 -C 1.2 -S 1.1 input.png output.png nord.txt
 | `jjn` | jarvis, judice, and ninke | enhanced detail preservation |
 | `sierra` | sierra dithering | balanced error diffusion |
 | `stucki` | stucki dithering | high-quality error diffusion |
-| `atkinson` | atkinson dithering | classic cac-style dithering |
+| `atkinson` | atkinson dithering | classic mac-style dithering |
 | `nodither` | direct color mapping | sharp color boundaries |
 
 ## palette system
