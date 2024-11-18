@@ -31,6 +31,8 @@ typedef enum {
     DITHER_BAYER,
     DITHER_JJN,
     DITHER_SIERRA,
+    DITHER_ATKINSON,
+    DITHER_STUCKI,
     DITHER_NONE
 } DitherMethod;
 
@@ -380,6 +382,79 @@ void apply_sierra_dither(float *image_f, unsigned char *output, int width, int h
     }
 }
 
+void apply_atkinson_dither(float *image_f, unsigned char *output, int width, int height, const Theme *theme) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int idx = (y * width + x) * 3;
+            Color old_pixel = {
+                clamp_float(image_f[idx]),
+                clamp_float(image_f[idx + 1]),
+                clamp_float(image_f[idx + 2])
+            };
+            Color new_pixel = find_closest_color_cached(old_pixel);
+            output[idx] = new_pixel.r;
+            output[idx + 1] = new_pixel.g;
+            output[idx + 2] = new_pixel.b;
+
+            float err_r = ((float)old_pixel.r - (float)new_pixel.r) / 8.0f;
+            float err_g = ((float)old_pixel.g - (float)new_pixel.g) / 8.0f;
+            float err_b = ((float)old_pixel.b - (float)new_pixel.b) / 8.0f;
+
+            // Distribute error to 6 neighboring pixels
+            int offsets[][2] = {{1,0}, {2,0}, {-1,1}, {0,1}, {1,1}, {0,2}};
+            for (int i = 0; i < 6; i++) {
+                int nx = x + offsets[i][0];
+                int ny = y + offsets[i][1];
+                if (nx >= 0 && nx < width && ny < height) {
+                    int n_idx = (ny * width + nx) * 3;
+                    image_f[n_idx] += err_r;
+                    image_f[n_idx + 1] += err_g;
+                    image_f[n_idx + 2] += err_b;
+                }
+            }
+        }
+    }
+}
+
+void apply_stucki_dither(float *image_f, unsigned char *output, int width, int height, const Theme *theme) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int idx = (y * width + x) * 3;
+            Color old_pixel = {
+                clamp_float(image_f[idx]),
+                clamp_float(image_f[idx + 1]),
+                clamp_float(image_f[idx + 2])
+            };
+            Color new_pixel = find_closest_color_cached(old_pixel);
+            output[idx] = new_pixel.r;
+            output[idx + 1] = new_pixel.g;
+            output[idx + 2] = new_pixel.b;
+
+            float err_r = (float)old_pixel.r - (float)new_pixel.r;
+            float err_g = (float)old_pixel.g - (float)new_pixel.g;
+            float err_b = (float)old_pixel.b - (float)new_pixel.b;
+
+            // Error distribution matrix (Stucki)
+            struct { int x, y; float w; } pattern[] = {
+                {1, 0, 8/42.0f}, {2, 0, 4/42.0f},
+                {-2, 1, 2/42.0f}, {-1, 1, 4/42.0f}, {0, 1, 8/42.0f}, {1, 1, 4/42.0f}, {2, 1, 2/42.0f},
+                {-2, 2, 1/42.0f}, {-1, 2, 2/42.0f}, {0, 2, 4/42.0f}, {1, 2, 2/42.0f}, {2, 2, 1/42.0f}
+            };
+
+            for (size_t i = 0; i < sizeof(pattern)/sizeof(pattern[0]); i++) {
+                int nx = x + pattern[i].x;
+                int ny = y + pattern[i].y;
+                if (nx >= 0 && nx < width && ny < height) {
+                    int n_idx = (ny * width + nx) * 3;
+                    image_f[n_idx] += err_r * pattern[i].w;
+                    image_f[n_idx + 1] += err_g * pattern[i].w;
+                    image_f[n_idx + 2] += err_b * pattern[i].w;
+                }
+            }
+        }
+    }
+}
+
 void apply_box_blur(float *image_f, int width, int height, int blur_strength) {
     if (blur_strength < 1) return;
 
@@ -584,7 +659,7 @@ void print_usage(const char *prog_name) {
     fprintf(stderr, "  -S, --saturation <value>       adjust saturation (float)\n");
     fprintf(stderr, "  -E, --export-palette [file]    export the color palette to a .txt file\n");
     fprintf(stderr, "  -h, --help                     display this help message\n");
-    fprintf(stderr, "available dither methods: floyd (default), bayer, ordered, jjn, sierra, nodither\n");
+    fprintf(stderr, "available dither methods: floyd (default), bayer, ordered, jjn, sierra, atkinson, stucki, nodither\n");
 }
 
 const char* get_file_extension(const char* filename) {
@@ -732,6 +807,10 @@ int main(int argc, char *argv[]) {
                 dither_method = DITHER_JJN;
             } else if (strcmp(argv[optind + 3], "sierra") == 0) {
                 dither_method = DITHER_SIERRA;
+            } else if (strcmp(argv[optind + 3], "atkinson") == 0) {
+                dither_method = DITHER_ATKINSON;
+            } else if (strcmp(argv[optind + 3], "stucki") == 0) {
+                dither_method = DITHER_STUCKI;
             } else {
                 fprintf(stderr, "error: unknown dither method '%s'.\n", argv[optind + 3]);
                 print_usage(argv[0]);
@@ -807,6 +886,12 @@ int main(int argc, char *argv[]) {
                 break;
             case DITHER_SIERRA:
                 apply_sierra_dither(image_f, output, width_img, height_img, &theme);
+                break;
+            case DITHER_ATKINSON:
+                apply_atkinson_dither(image_f, output, width_img, height_img, &theme);
+                break;
+            case DITHER_STUCKI:
+                apply_stucki_dither(image_f, output, width_img, height_img, &theme);
                 break;
             case DITHER_NONE:
                 for (int y = 0; y < height_img; y++) {
@@ -886,6 +971,12 @@ int main(int argc, char *argv[]) {
                 break;
             case DITHER_SIERRA:
                 printf("sierra\n");
+                break;
+            case DITHER_ATKINSON:
+                printf("atkinson\n");
+                break;
+            case DITHER_STUCKI:
+                printf("stucki\n");
                 break;
             case DITHER_NONE:
                 printf("no dither\n");
