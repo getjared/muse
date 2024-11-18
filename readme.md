@@ -19,7 +19,7 @@ using the catppuccin palette:
 
 
 ## key features
-- advanced dithering algorithms (floyd-steinberg, bayer, ordered, jjn, sierra)
+- advanced dithering algorithms (floyd-steinberg, bayer, ordered, jjn, sierra, atkinson, stucki)
 - lospec.com palette compatibility
 - vintage film emulation:
   - super 8 grain effect
